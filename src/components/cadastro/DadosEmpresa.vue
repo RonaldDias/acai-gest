@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, onMounted, watch } from "vue";
-import { useCadastroStore } from "../stores/cadastroStore";
+import { useCadastroStore } from "../../stores/cadastroStore";
 import { Trash2 } from "lucide-vue-next";
 import IMask from "imask";
 
@@ -63,7 +63,15 @@ const validarCampos = () => {
 
 const handleSubmit = () => {
   if (validarCampos()) {
-    cadastro.atualizarDados(empresa);
+    cadastro.atualizarDados({
+      dadosEmpresa: {
+        nome: empresa.nome,
+        cnpj: empresa.cnpj,
+        endereco: empresa.endereco,
+        quantidadePontos: empresa.quantidadePontos,
+        vendedores: empresa.vendedores,
+      },
+    });
     emit("next");
   }
 };
@@ -71,6 +79,10 @@ const handleSubmit = () => {
 onMounted(() => {
   if (cnpjRef.value) {
     IMask(cnpjRef.value, { mask: "00.000.000/0000-00" });
+  }
+
+  if (cadastro.dados.dadosEmpresa) {
+    Object.assign(empresa, cadastro.dados.dadosEmpresa);
   }
 });
 

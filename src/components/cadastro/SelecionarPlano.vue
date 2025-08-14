@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed } from "vue";
-import { useCadastroStore } from "../stores/cadastroStore";
+import { ref, computed, watch, onMounted } from "vue";
+import { useCadastroStore } from "../../stores/cadastroStore";
 
 const cadastro = useCadastroStore();
 const emit = defineEmits(["next", "back"]);
@@ -8,7 +8,9 @@ const emit = defineEmits(["next", "back"]);
 const planoSelecionado = ref("");
 const assinaturaAnual = ref(false);
 
-const pontos = computed(() => Number(cadastro.dados.quantidadePontos || 0));
+const pontos = computed(() =>
+  Number(cadastro.dados.dadosEmpresa?.quantidadePontos || 0)
+);
 
 const planoBasicoDisponivel = computed(() => pontos.value <= 1);
 
@@ -32,6 +34,15 @@ const economiaMensal = computed(() => {
   };
 });
 
+onMounted(() => {
+  if (cadastro.dados.plano?.tipoPlano) {
+    planoSelecionado.value = cadastro.dados.plano.tipoPlano;
+  }
+  if (cadastro.dados.plano?.tipoAssinatura) {
+    assinaturaAnual.value = cadastro.dados.plano.tipoAssinatura === "anual";
+  }
+});
+
 function selecionarPlano(plano) {
   if (plano === "basic" && !planoBasicoDisponivel.value) return;
   planoSelecionado.value = plano;
@@ -42,8 +53,10 @@ function handleSubmit() {
     return alert("Selecione um plano para continuar.");
 
   cadastro.atualizarDados({
-    plano: planoSelecionado.value,
-    assinatura: assinaturaAnual.value ? "anual" : "mensal",
+    plano: {
+      tipoPlano: planoSelecionado.value,
+      tipoAssinatura: assinaturaAnual.value ? "anual" : "mensal",
+    },
   });
 
   emit("next");

@@ -18,10 +18,37 @@ function irParaCadastro() {
   router.push("/cadastro");
 }
 
-function handleSubmit() {
+async function handleSubmit() {
   if (!email.value || !senha.value) {
     erro.value = "Preencha todos os campos.";
     return;
+  }
+  try {
+    const response = await fetch("http://localhost:3001/api/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: email.value,
+        senha: senha.value,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      console.log("Usuário logado:", data.user);
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      router.push("/dashboard/vendas");
+    } else {
+      erro.value = data.message;
+    }
+  } catch (error) {
+    console.error("Erro no login:", error);
+    erro.value = "Erro de conexão. Tente novamente.";
   }
 }
 
@@ -75,6 +102,7 @@ watch([email, senha], () => {
               placeholder="••••••••"
             />
             <button
+              type="button"
               @click="mostrarSenha = !mostrarSenha"
               class="absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
             >

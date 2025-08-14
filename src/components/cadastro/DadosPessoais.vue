@@ -2,7 +2,7 @@
 import { ref, reactive, watch, onMounted } from "vue";
 import IMask from "imask";
 import { Eye, EyeOff } from "lucide-vue-next";
-import { useCadastroStore } from "../stores/cadastroStore";
+import { useCadastroStore } from "../../stores/cadastroStore";
 
 const atualizarDados = useCadastroStore().atualizarDados;
 const emit = defineEmits(["next"]);
@@ -91,9 +91,14 @@ function validarFormulario() {
 function handleSubmit() {
   if (validarFormulario()) {
     atualizarDados({
-      ...dados,
-      senha: senha.value,
-      confirmaSenha: confirmaSenha.value,
+      dadosPessoais: {
+        nome: dados.nome,
+        cpf: dados.cpf,
+        telefone: dados.telefone,
+        email: dados.email,
+        senha: senha.value,
+        confirmaSenha: confirmaSenha.value,
+      },
     });
     emit("next");
   }

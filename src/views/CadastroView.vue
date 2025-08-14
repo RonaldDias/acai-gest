@@ -4,10 +4,10 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { Settings, CreditCard, User, Building } from "lucide-vue-next";
 
-import DadosPessoais from "../components/DadosPessoais.vue";
-import DadosEmpresa from "../components/DadosEmpresa.vue";
-import SelecionarPlano from "../components/SelecionarPlano.vue";
-import FormaPagamento from "../components/FormaPagamento.vue";
+import DadosPessoais from "../components/cadastro/DadosPessoais.vue";
+import DadosEmpresa from "../components/cadastro/DadosEmpresa.vue";
+import SelecionarPlano from "../components/cadastro/SelecionarPlano.vue";
+import FormaPagamento from "../components/cadastro/FormaPagamento.vue";
 
 const etapas = ["Dados Pessoais", "Dados da Empresa", "Plano", "Pagamento"];
 const etapa = ref(1);
