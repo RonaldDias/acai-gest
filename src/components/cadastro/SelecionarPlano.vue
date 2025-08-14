@@ -9,7 +9,7 @@ const planoSelecionado = ref("");
 const assinaturaAnual = ref(false);
 
 const pontos = computed(() =>
-  Number(cadastro.dados.dadosEmpresa?.quantidadePontos || 0)
+  Number(cadastro.dados.dadosEmpresa?.quantidadePontos || 0),
 );
 
 const planoBasicoDisponivel = computed(() => pontos.value <= 1);

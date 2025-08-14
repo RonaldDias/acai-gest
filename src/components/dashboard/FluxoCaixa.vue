@@ -48,7 +48,7 @@ const categoriasEntrada = [
 ];
 
 const categorias = computed(() =>
-  novaTransacao.tipo === "entrada" ? categoriasEntrada : categoriasSaida
+  novaTransacao.tipo === "entrada" ? categoriasEntrada : categoriasSaida,
 );
 
 function abrirModal() {
@@ -89,13 +89,13 @@ function salvarTransacao() {
 const totalEntradas = computed(() =>
   transacoes.value
     .filter((t) => t.tipo === "entrada")
-    .reduce((acc, cur) => acc + cur.valor, 0)
+    .reduce((acc, cur) => acc + cur.valor, 0),
 );
 
 const totalSaidas = computed(() =>
   transacoes.value
     .filter((t) => t.tipo === "saida")
-    .reduce((acc, cur) => acc + cur.valor, 0)
+    .reduce((acc, cur) => acc + cur.valor, 0),
 );
 
 const lucroMensal = computed(() => totalEntradas.value - totalSaidas.value);

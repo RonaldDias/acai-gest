@@ -27,28 +27,32 @@ const menuItems = computed(() => {
   const base = [
     { name: "Vendas", icon: ShoppingCart, route: "/dashboard/vendas" },
     { name: "Estoque", icon: Package, route: "/dashboard/estoque" },
-    { name: "Fluxo de Caixa", icon: BarChart2, route: "/dashboard/fluxo-caixa" }
+    {
+      name: "Fluxo de Caixa",
+      icon: BarChart2,
+      route: "/dashboard/fluxo-caixa",
+    },
   ];
   return base;
 });
 
 function goTo(route) {
   if (route === "/dashboard/fluxo-caixa") {
-    mostrarModalSenha.value = true
-    senhaModal.value = ""
-    erroModal.value = ""
+    mostrarModalSenha.value = true;
+    senhaModal.value = "";
+    erroModal.value = "";
   } else {
-  router.push(route);
+    router.push(route);
   }
 }
 
 function validarSenhaModal() {
-  const senhaCorreta = "123456"
+  const senhaCorreta = "123456";
   if (senhaModal.value === senhaCorreta) {
-    mostrarModalSenha.value = false
-    router.push("/dashboard/fluxo-caixa")
+    mostrarModalSenha.value = false;
+    router.push("/dashboard/fluxo-caixa");
   } else {
-    erroModal.value = "Senha incorreta. Tente novamente."
+    erroModal.value = "Senha incorreta. Tente novamente.";
   }
 }
 
