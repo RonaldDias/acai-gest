@@ -32,12 +32,9 @@ const menuItems = computed(() => {
   const base = [
     { name: "Vendas", icon: ShoppingCart, route: "/dashboard/vendas" },
     { name: "Estoque", icon: Package, route: "/dashboard/estoque" },
-    {
-      name: "Fluxo de Caixa",
-      icon: BarChart2,
-      route: "/dashboard/fluxo-caixa",
-    },
+    { name: "Fluxo de Caixa", icon: BarChart2, route: "/dashboard/fluxo-caixa" },
     { name: "Relatórios", icon: FileText, route: "/dashboard/relatorios" },
+
   ];
 
   if (authStore.isDono) {
@@ -47,7 +44,6 @@ const menuItems = computed(() => {
       route: "/dashboard/vendedores",
     });
   }
-
   return base;
 });
 

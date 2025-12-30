@@ -90,25 +90,25 @@ watch(
   () => empresa.nome,
   (val) => {
     if (val) erros.nome = "";
-  }
+  },
 );
 watch(
   () => empresa.cnpj,
   (val) => {
     if (val && validarCNPJ(val)) erros.cnpj = "";
-  }
+  },
 );
 watch(
   () => empresa.endereco,
   (val) => {
     if (val) erros.endereco = "";
-  }
+  },
 );
 watch(
   () => empresa.quantidadePontos,
   (val) => {
     if (val) erros.quantidadePontos = "";
-  }
+  },
 );
 </script>
 

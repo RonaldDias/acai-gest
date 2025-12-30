@@ -62,24 +62,24 @@ function validarFormulario() {
   erros.cpf = !dados.cpf
     ? "CPF é obrigatório."
     : !validarCPFFormato(dados.cpf)
-    ? "Formato de CPF inválido."
-    : "";
+      ? "Formato de CPF inválido."
+      : "";
   erros.telefone = !dados.telefone ? "Telefone é obrigatório." : "";
   erros.email = !dados.email
     ? "E-mail é obrigatório."
     : !validarEmail(dados.email)
-    ? "E-mail inválido."
-    : "";
+      ? "E-mail inválido."
+      : "";
   erros.senha = !senha.value
     ? "Senha é obrigatória."
     : !validarSenha(senha.value)
-    ? "Senha inválida."
-    : "";
+      ? "Senha inválida."
+      : "";
   erros.confirmaSenha = !confirmaSenha.value
     ? "Confirmação é obrigatória."
     : senha.value !== confirmaSenha.value
-    ? "As senhas não coincidem."
-    : "";
+      ? "As senhas não coincidem."
+      : "";
 
   Object.values(erros).forEach((err) => {
     if (err) valido = false;
@@ -108,28 +108,28 @@ watch(
   () => dados.nome,
   (val) => {
     if (val) erros.nome = "";
-  }
+  },
 );
 
 watch(
   () => dados.cpf,
   (val) => {
     if (val && validarCPFFormato(val)) erros.cpf = "";
-  }
+  },
 );
 
 watch(
   () => dados.telefone,
   (val) => {
     if (val) erros.telefone = "";
-  }
+  },
 );
 
 watch(
   () => dados.email,
   (val) => {
     if (val && validarEmail(val)) erros.email = "";
-  }
+  },
 );
 
 watch(
@@ -142,7 +142,7 @@ watch(
     } else {
       erros.confirmaSenha = "";
     }
-  }
+  },
 );
 </script>
 

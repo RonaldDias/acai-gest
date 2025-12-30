@@ -45,8 +45,8 @@ const etapaAnterior = () => {
             etapa > idx + 1
               ? 'bg-purple-700'
               : etapa === idx + 1
-              ? 'bg-purple-700'
-              : 'bg-purple-300'
+                ? 'bg-purple-700'
+                : 'bg-purple-300'
           "
         />
         <div class="relative z-10 flex flex-col items-center w-full">
@@ -56,8 +56,8 @@ const etapaAnterior = () => {
               etapa === idx + 1
                 ? 'bg-purple-700 border-white'
                 : etapa > idx + 1
-                ? 'bg-white border-purple-700 text-purple-700'
-                : 'bg-white border-purple-300 text-purple-500'
+                  ? 'bg-white border-purple-700 text-purple-700'
+                  : 'bg-white border-purple-300 text-purple-500'
             "
           >
             <component
