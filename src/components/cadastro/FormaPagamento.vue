@@ -2,6 +2,12 @@
 import { ref, computed, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useCadastroStore } from "../../stores/cadastroStore";
+import { useAuthStore } from "@/stores/authStore";
+import { api } from "@/services/api";
+
+const authStore = useAuthStore();
+const erro = ref("");
+const enviando = ref(false);
 
 const cadastro = useCadastroStore();
 const router = useRouter();
@@ -85,12 +91,58 @@ function onSelectForma(value) {
 }
 
 const mostrarModal = ref(false);
-function confirmarCadastro() {
-  mostrarModal.value = true;
-  setTimeout(() => {
-    mostrarModal.value = false;
-    router.push("/");
-  }, 5000);
+
+async function confirmarCadastro() {
+  enviando.value = true;
+  erro.value = "";
+
+  try {
+    const dadosCadastro = {
+      nome: cadastro.dados.dadosPessoais.nome,
+      cpf: cadastro.dados.dadosPessoais.cpf,
+      telefone: cadastro.dados.dadosPessoais.telefone,
+      email: cadastro.dados.dadosPessoais.email,
+      senha: cadastro.dados.dadosPessoais.senha,
+      confirmaSenha: cadastro.dados.dadosPessoais.confirmaSenha,
+
+      nomeEmpresa: cadastro.dados.dadosEmpresa.nome,
+      cnpj: cadastro.dados.dadosEmpresa.cnpj,
+      endereco: cadastro.dados.dadosEmpresa.endereco,
+      quantidadePontos: cadastro.dados.dadosEmpresa.quantidadePontos,
+      vendedores: cadastro.dados.dadosEmpresa.vendedores,
+
+      plano: cadastro.dados.plano.tipoPlano,
+      tipoAssinatura: cadastro.dados.plano.tipoAssinatura,
+
+      formaPagamento: forma.value,
+      valorPago: preco.value,
+    };
+
+    // TODO Backend: Aceitar todos esses campos e criar estrutura completa
+    const response = await api.post("/auth/cadastro", dadosCadastro);
+
+    if (response.success) {
+      authStore.token = response.token;
+      authStore.user = response.user;
+      authStore.isAuthenticated = true;
+
+      cadastro.limparDados();
+
+      mostrarModal.value = true;
+
+      setTimeout(() => {
+        mostrarModal.value = false;
+        router.push("/dashboard/vendas");
+      }, 5000);
+    } else {
+      erro.value = response.message || "Erro ao realizar o cadastro.";
+    }
+  } catch (error) {
+    console.error("Erro no cadastro:", error);
+    erro.value = "Erro de conexão. Tente novamente.";
+  } finally {
+    enviando.value = false;
+  }
 }
 
 onBeforeUnmount(() => {
@@ -101,7 +153,12 @@ onBeforeUnmount(() => {
 <template>
   <div class="max-w-3xl mx-auto p-6 bg-white rounded shadow space-y-6">
     <h3 class="text-2xl font-semibold text-gray-800 text-center">Pagamento</h3>
-
+    <p
+      v-if="erro"
+      class="text-red-600 text-center text-sm bg-red-50 p-3 rounded"
+    >
+      {{ erro }}
+    </p>
     <div class="flex gap-4 items-center justify-center">
       <label class="flex items-center space-x-2">
         <input
@@ -209,11 +266,11 @@ onBeforeUnmount(() => {
 
       <button
         type="button"
-        class="bg-purple-700 text-white px-4 py-2 rounded"
-        :disabled="!paymentOk"
+        class="bg-purple-700 text-white px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+        :disabled="!paymentOk || enviando"
         @click="confirmarCadastro"
       >
-        Confirmar Cadastro
+        {{ enviando ? "Enviando..." : "Confirmar Cadastro" }}
       </button>
     </div>
 

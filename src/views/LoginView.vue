@@ -3,12 +3,14 @@ import { ref, reactive, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
 
 import { Mail, Facebook, Eye, EyeOff } from "lucide-vue-next";
+import { useAuthStore } from "@/stores/authStore";
 
 const email = ref("");
 const senha = ref("");
 const erro = ref("");
 const mostrarSenha = ref(false);
 const router = useRouter();
+const authStore = useAuthStore();
 
 function toggleSenha() {
   mostrarSenha.value = !mostrarSenha.value;
@@ -23,32 +25,15 @@ async function handleSubmit() {
     erro.value = "Preencha todos os campos.";
     return;
   }
-  try {
-    const response = await fetch("http://localhost:3001/api/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        email: email.value,
-        senha: senha.value,
-      }),
-    });
 
-    const data = await response.json();
+  erro.value = "";
 
-    if (data.success) {
-      console.log("Usuário logado:", data.user);
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+  const resultado = await authStore.login(email.value, senha.value);
 
-      router.push("/dashboard/vendas");
-    } else {
-      erro.value = data.message;
-    }
-  } catch (error) {
-    console.error("Erro no login:", error);
-    erro.value = "Erro de conexão. Tente novamente.";
+  if (resultado.success) {
+    router.push("/dashboard/vendas");
+  } else {
+    erro.value = resultado.message || "Erro ao fazer login.";
   }
 }
 
@@ -87,7 +72,7 @@ watch([email, senha], () => {
           <input
             type="email"
             v-model="email"
-            class="w-full border-b py-3 focus:outline-none focus:border-purple-700"
+            class="w-full border-b py-3 focus:outline-none focus:border-purple-700 disabled:opacity-50"
             placeholder="seuemail@exemplo.com"
           />
         </div>
@@ -98,13 +83,13 @@ watch([email, senha], () => {
             <input
               :type="mostrarSenha ? 'text' : 'password'"
               v-model="senha"
-              class="w-full border-b py-3 focus:outline-none focus:border-purple-700"
+              class="w-full border-b py-3 focus:outline-none focus:border-purple-700 disabled:opacity-50"
               placeholder="••••••••"
             />
             <button
               type="button"
               @click="mostrarSenha = !mostrarSenha"
-              class="absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer"
+              class="absolute right-1 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer disabled:opacity-50"
             >
               <component :is="mostrarSenha ? EyeOff : Eye" />
             </button>
@@ -119,7 +104,7 @@ watch([email, senha], () => {
 
         <button
           type="submit"
-          class="w-full bg-purple-600 shadow-purple-950 shadow-md text-white py-2 px-4 rounded-xl font-semibold hover:bg-purple-800 transition duration-300"
+          class="w-full bg-purple-600 shadow-purple-950 shadow-md text-white py-2 px-4 rounded-xl font-semibold hover:bg-purple-800 transition duration-300 disabled:cursor-not-allowed"
         >
           Entrar
         </button>

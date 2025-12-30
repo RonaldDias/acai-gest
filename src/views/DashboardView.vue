@@ -7,13 +7,18 @@ import {
   BarChart2,
   LogOut,
   Menu,
+  User,
+  FileText,
+  Users,
 } from "lucide-vue-next";
 import { useCadastroStore } from "../stores/cadastroStore";
+import { useAuthStore } from "@/stores/authStore";
 
 const router = useRouter();
 const cadastro = useCadastroStore();
+const authStore = useAuthStore();
 
-const sidebarOpen = ref(true);
+const sidebarOpen = ref(false);
 
 // Simulação de tipo de usuário: 'vendedor' ou 'dono'
 // No futuro, isso deve vir do backend ou da store
@@ -22,52 +27,64 @@ const userRole = computed(() => cadastro.dados.tipoUsuario || "vendedor");
 const mostrarModalSenha = ref(false);
 const senhaModal = ref("");
 const erroModal = ref("");
-// Lista de menus
+
 const menuItems = computed(() => {
   const base = [
     { name: "Vendas", icon: ShoppingCart, route: "/dashboard/vendas" },
     { name: "Estoque", icon: Package, route: "/dashboard/estoque" },
-    { name: "Fluxo de Caixa", icon: BarChart2, route: "/dashboard/fluxo-caixa" }
+    {
+      name: "Fluxo de Caixa",
+      icon: BarChart2,
+      route: "/dashboard/fluxo-caixa",
+    },
+    { name: "Relatórios", icon: FileText, route: "/dashboard/relatorios" },
   ];
+
+  if (authStore.isDono) {
+    base.push({
+      name: "Vendedores",
+      icon: Users,
+      route: "/dashboard/vendedores",
+    });
+  }
+
   return base;
 });
 
 function goTo(route) {
   if (route === "/dashboard/fluxo-caixa") {
-    mostrarModalSenha.value = true
-    senhaModal.value = ""
-    erroModal.value = ""
+    mostrarModalSenha.value = true;
+    senhaModal.value = "";
+    erroModal.value = "";
   } else {
-  router.push(route);
+    router.push(route);
   }
 }
 
 function validarSenhaModal() {
-  const senhaCorreta = "123456"
+  const senhaCorreta = "123456";
   if (senhaModal.value === senhaCorreta) {
-    mostrarModalSenha.value = false
-    router.push("/dashboard/fluxo-caixa")
+    mostrarModalSenha.value = false;
+    router.push("/dashboard/fluxo-caixa");
   } else {
-    erroModal.value = "Senha incorreta. Tente novamente."
+    erroModal.value = "Senha incorreta. Tente novamente.";
   }
 }
 
 function logout() {
-  cadastro.$reset();
+  authStore.logout();
   router.push("/");
 }
 </script>
 
 <template>
   <div class="flex h-screen bg-gray-100">
-    <!-- Sidebar -->
     <div
       :class="[
         'bg-purple-700 text-white flex flex-col transition-all duration-300',
         sidebarOpen ? 'w-56' : 'w-16',
       ]"
     >
-      <!-- Logo e botão menu -->
       <div
         class="flex items-center justify-between p-4 border-b border-purple-600"
       >
@@ -80,7 +97,6 @@ function logout() {
         </button>
       </div>
 
-      <!-- Menu -->
       <nav class="flex-1 p-2 space-y-2">
         <div
           v-for="item in menuItems"
