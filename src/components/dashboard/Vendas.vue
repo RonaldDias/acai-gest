@@ -221,7 +221,7 @@ function atualizarResumo() {
   totalVendasHoje.value = vendasHoje.value.length;
   totalDinheiroHoje.value = vendasHoje.value.reduce(
     (sum, v) => sum + v.valorTotal,
-    0
+    0,
   );
 }
 
