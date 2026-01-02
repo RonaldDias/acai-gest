@@ -22,11 +22,11 @@ const sidebarOpen = ref(false);
 
 // Simulação de tipo de usuário: 'vendedor' ou 'dono'
 // No futuro, isso deve vir do backend ou da store
-const userRole = computed(() => cadastro.dados.tipoUsuario || "vendedor");
 
 const mostrarModalSenha = ref(false);
 const senhaModal = ref("");
 const erroModal = ref("");
+const tentativasRestantes = ref(3);
 
 const menuItems = computed(() => {
   const base = [
@@ -51,23 +51,44 @@ const menuItems = computed(() => {
 });
 
 function goTo(route) {
-  if (route === "/dashboard/fluxo-caixa") {
+  if (route === "/dashboard/fluxo-caixa" && !authStore.isDono) {
     mostrarModalSenha.value = true;
     senhaModal.value = "";
     erroModal.value = "";
+    tentativasRestantes.value = 3;
   } else {
     router.push(route);
   }
 }
 
 function validarSenhaModal() {
-  const senhaCorreta = "123456";
-  if (senhaModal.value === senhaCorreta) {
+  const PIN_CORRETO = "1234"; // TODO: Backend gera e envia por email
+  if (senhaModal.value === PIN_CORRETO) {
     mostrarModalSenha.value = false;
     router.push("/dashboard/fluxo-caixa");
+    tentativasRestantes.value = 3;
   } else {
-    erroModal.value = "Senha incorreta. Tente novamente.";
+    tentativasRestantes.value--;
+
+    if (tentativasRestantes.value > 0) {
+      erroModal.value = `PIN incorreto. ${tentativasRestantes.value} tentativa(s) restante(s).`;
+      senhaModal.value = "";
+    } else {
+      erroModal.value = "Tentativas esgotadas. VOltando para Vendas...";
+      setTimeout(() => {
+        mostrarModalSenha.value = false;
+        router.push("/dashboard/vendas");
+      }, 2000);
+    }
   }
+}
+
+function cancelarModal() {
+  mostrarModalSenha.value = false;
+  senhaModal.value = "";
+  erroModal.value = "";
+  tentativasRestantes.value = 3;
+  router.push("/dashboard/vendas");
 }
 
 function logout() {
@@ -108,7 +129,6 @@ function logout() {
         </div>
       </nav>
 
-      <!-- Sair -->
       <div class="p-2 border-t border-purple-600">
         <button
           @click="logout"
@@ -120,15 +140,59 @@ function logout() {
       </div>
     </div>
 
-    <!-- Área Principal -->
     <div class="flex-1 p-6 overflow-y-auto">
       <router-view />
+    </div>
+
+    <div
+      v-if="mostrarModalSenha"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-lg p-6 w-96 shadow-xl">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Acesso Restrito</h2>
+        <p class="text-gray-600 mb-4">
+          Digite o PIN de segurança do dono para acessar o Fluxo de Caixa:
+        </p>
+
+        <input
+          v-model="senhaModal"
+          type="password"
+          placeholder="Digite o PIN (1234)"
+          maxlength="6"
+          class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent mb-2"
+          @keyup.enter="validarSenhaModal"
+        />
+
+        <p v-if="erroModal" class="text-red-500 text-sm mb-4">
+          {{ erroModal }}
+        </p>
+
+        <div class="flex space-x-3">
+          <button
+            @click="cancelarModal"
+            class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+            :disabled="tentativasRestantes === 0"
+          >
+            Cancelar
+          </button>
+          <button
+            @click="validarSenhaModal"
+            class="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+            :disabled="tentativasRestantes === 0"
+          >
+            Confirmar
+          </button>
+        </div>
+
+        <p class="text-xs text-gray-500 mt-4 text-center">
+          Tentativas restantes: {{ tentativasRestantes }}/3
+        </p>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* Scrollbar estilizada */
 ::-webkit-scrollbar {
   width: 6px;
 }

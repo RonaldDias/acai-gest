@@ -6,6 +6,7 @@ export const useAuthStore = defineStore("auth", {
     token: null,
     user: null,
     isAuthenticated: false,
+    pinValidado: false,
   }),
 
   getters: {
@@ -42,6 +43,7 @@ export const useAuthStore = defineStore("auth", {
       this.token = null;
       this.user = null;
       this.isAuthenticated = false;
+      this.pinValidado = false;
     },
 
     checkAuth() {
@@ -50,6 +52,14 @@ export const useAuthStore = defineStore("auth", {
 
     atualizarUsuario(novosDados) {
       this.user = { ...this.user, ...novosDados };
+    },
+
+    validarPin() {
+      this.pinValidado = true;
+    },
+
+    resetarPin() {
+      this.pinValidado = false;
     },
   },
 
