@@ -472,71 +472,60 @@ onMounted(() => {
       </div>
 
       <div v-else class="overflow-x-auto">
-        <table class="w-full">
-          <thead>
-            <tr class="border-b">
-              <th class="text-left py-3 px-2">Horário</th>
-              <th class="text-left py-3 px-2">Produto</th>
-              <th class="text-right py-3 px-2">Quantidade</th>
-              <th class="text-right py-3 px-2">Valor</th>
-              <th class="text-center py-3 px-2">Pagamento</th>
-              <th
-                v-if="authStore.user?.tipo === 'dono'"
-                class="text-center py-3 px-2"
-              >
-                Vendedor
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
+        <div class="bg-white rounded-lg shadow p-6">
+          <h2 class="text-xl font-semibold mb-4">Vendas de Hoje</h2>
+
+          <div
+            v-if="vendasHoje.length === 0"
+            class="text-center text-gray-500 py-8"
+          >
+            Nenhuma venda registrada hoje
+          </div>
+
+          <div v-else class="space-y-3">
+            <div
               v-for="(v, index) in vendasHoje"
               :key="index"
-              class="border-b hover:bg-gray-50"
+              class="flex items-center justify-between p-4 hover:bg-gray-50 rounded-lg transition"
             >
-              <td class="py-3 px-2">
-                {{
-                  new Date(v.data).toLocaleTimeString("pt-BR", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                }}
-              </td>
-              <td class="py-3 px-2">
-                <div v-for="(item, idx) in v.itens" :key="idx" class="mb-1">
-                  {{ item.produtoNome }}
-                  <span v-if="item.tipoAcai" class="text-sm text-gray-600">
-                    ({{ item.tipoAcai }})
-                  </span>
-                  <span v-if="item.outroNome" class="text-sm text-gray-600">
-                    ({{ item.outroNome }})
-                  </span>
-                </div>
-              </td>
-              <td class="text-right py-3 px-2">
-                <div v-for="(item, idx) in v.itens" :key="idx" class="mb-1">
-                  {{ formatarQuantidade(item.quantidade, item.unidade) }}
-                </div>
-              </td>
-              <td class="text-right py-3 px-2 font-semibold">
-                R$ {{ v.valorTotal.toFixed(2) }}
-              </td>
-              <td class="text-center py-3 px-2">
-                <span
-                  class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded"
+              <div class="flex items-center space-x-4">
+                <div
+                  class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center"
                 >
-                  {{ v.formaPagamento }}
-                </span>
-              </td>
-              <td
-                v-if="authStore.user?.tipo === 'dono'"
-                class="text-center py-3 px-2"
-              >
-                {{ v.vendedorNome || "N/A" }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  <ShoppingCart :size="20" class="text-green-600" />
+                </div>
+
+                <div>
+                  <p class="font-medium text-gray-800">
+                    <span v-for="(item, idx) in v.itens" :key="idx">
+                      {{ item.produtoNome }}
+                      <span v-if="item.tipoAcai" class="text-sm text-gray-600"
+                        >({{ item.tipoAcai }})</span
+                      >
+                      <span v-if="item.outroNome" class="text-sm text-gray-600"
+                        >({{ item.outroNome }})</span
+                      >
+                      <span v-if="idx < v.itens.length - 1">, </span>
+                    </span>
+                  </p>
+                  <p class="text-sm text-gray-500">
+                    {{
+                      new Date(v.data).toLocaleTimeString("pt-BR", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    }}
+                    · {{ v.formaPagamento }}
+                  </p>
+                </div>
+              </div>
+
+              <p class="text-lg font-semibold text-green-600">
+                R$ {{ v.valorTotal.toFixed(2) }}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

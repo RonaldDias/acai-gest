@@ -278,69 +278,53 @@ onMounted(async () => {
 
     <div class="bg-white rounded-lg shadow overflow-hidden">
       <div class="overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-gray-50 border-b">
-            <tr>
-              <th class="text-left py-3 px-4 font-medium text-gray-700">
-                Produto
-              </th>
-              <th class="text-right py-3 px-4 font-medium text-gray-700">
-                Quantidade
-              </th>
-              <th class="text-right py-3 px-4 font-medium text-gray-700">
-                Preço Unit.
-              </th>
-              <th class="text-right py-3 px-4 font-medium text-gray-700">
-                Valor Total
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
+        <div class="bg-white rounded-lg shadow p-6">
+          <h2 class="text-xl font-semibold mb-4">Produtos em Estoque</h2>
+
+          <div
+            v-if="produtosFiltrados.length === 0"
+            class="text-center text-gray-500 py-8"
+          >
+            Nenhum produto encontrado
+          </div>
+
+          <div v-else class="space-y-3">
+            <div
               v-for="produto in produtosFiltrados"
               :key="produto.id"
-              class="border-b hover:bg-gray-50 transition"
+              class="flex items-center justify-between p-4 hover:bg-gray-50 rounded-lg transition"
             >
-              <td class="py-3 px-4">
-                <div class="flex items-center space-x-3">
-                  <div
-                    class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center"
-                  >
-                    <Package :size="16" class="text-purple-700" />
-                  </div>
-                  <span class="font-medium text-gray-800">{{
-                    produto.nome
-                  }}</span>
+              <div class="flex items-center space-x-4">
+                <div
+                  class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center"
+                >
+                  <Package :size="20" class="text-purple-600" />
                 </div>
-              </td>
-              <td class="py-3 px-4 text-right">
-                <div class="flex items-center justify-end space-x-2">
-                  <span
-                    v-if="getStatusEstoque(produto)"
-                    :class="[
-                      'px-2 py-1 rounded text-xs font-medium',
-                      getStatusEstoque(produto).classe,
-                    ]"
-                  >
-                    {{ getStatusEstoque(produto).label }}
-                  </span>
-                  <span class="font-medium text-gray-800">
-                    {{ produto.quantidade }} {{ produto.unidade }}
-                  </span>
+
+                <div>
+                  <p class="font-medium text-gray-800">{{ produto.nome }}</p>
+                  <p class="text-sm text-gray-500">
+                    {{ produto.quantidade }} {{ produto.unidade }} · R$
+                    {{ produto.precoUnitario.toFixed(2) }}/un
+                    <span
+                      v-if="getStatusEstoque(produto)"
+                      :class="[
+                        'ml-2 px-2 py-1 rounded text-xs font-medium',
+                        getStatusEstoque(produto).classe,
+                      ]"
+                    >
+                      {{ getStatusEstoque(produto).label }}
+                    </span>
+                  </p>
                 </div>
-              </td>
-              <td class="py-3 px-4 text-right text-gray-600">
-                R$ {{ produto.precoUnitario.toFixed(2) }}
-              </td>
-              <td class="py-3 px-4 text-right font-semibold text-gray-800">
+              </div>
+
+              <p class="text-lg font-semibold text-gray-800">
                 R$ {{ valorTotalProduto(produto).toFixed(2) }}
-              </td>
-              <td class="py-3 px-4">
-                <div class="flex items-center justify-center space-x-2"></div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div

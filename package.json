@@ -13,6 +13,8 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.10",
     "imask": "^7.6.1",
+    "jspdf": "^4.0.0",
+    "jspdf-autotable": "^5.0.7",
     "lucide-vue-next": "^0.516.0",
     "pinia": "^3.0.3",
     "pinia-plugin-persistedstate": "^4.4.1",
