@@ -1,10 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { ShoppingCart, DollarSign, Plus, Minus } from "lucide-vue-next";
-import { vendasApi } from "@/services/api";
 import { useAuthStore } from "@/stores/authStore";
+import { useToastStore } from "@/stores/toastStore";
 
-const authStore = useAuthStore();
+const toast = useToastStore;
 
 const tiposAcai = [
   { label: "Grosso", valor: 25 },
@@ -113,27 +112,27 @@ function decrementarQuantidade() {
 
 function validarItem() {
   if (!venda.value.produtoId) {
-    alert("Selecione um produto");
+    toast.warning("Selecione um produto");
     return false;
   }
 
   if (isAcai.value && !venda.value.tipoAcai) {
-    alert("Selecione o tipo de açaí");
+    toast.warning("Selecione o tipo de açaí");
     return false;
   }
 
   if (isOutro.value && !venda.value.outroNome.trim()) {
-    alert("Especifique o produto");
+    toast.warning("Especifique o produto");
     return false;
   }
 
   if (venda.value.quantidade === 0) {
-    alert("Informe a quantidade");
+    toast.warning("Informe a quantidade");
     return false;
   }
 
   if (venda.value.precoUnitario === 0) {
-    alert("Informe o preço unitário");
+    toast.warning("Informe o preço unitário");
     return false;
   }
 
@@ -167,7 +166,7 @@ const totalItensVenda = computed(() => {
 
 async function registrarVenda() {
   if (itensVenda.value.length === 0) {
-    alert("Adicione pelo menos um item à venda");
+    toast.warning("Adicione pelo menos um item à venda");
     return;
   }
 
@@ -203,7 +202,7 @@ async function registrarVenda() {
   limparFormulario();
 
   registrandoVenda.value = false;
-  alert("Venda registrada com sucesso!");
+  toast.success("Venda registrada com sucesso!");
 }
 
 function limparFormulario() {

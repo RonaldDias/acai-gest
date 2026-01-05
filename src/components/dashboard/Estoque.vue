@@ -1,6 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { Package, DollarSign, Plus, Minus, Search } from "lucide-vue-next";
+import { useToastStore } from "@/stores/toastStore";
+
+const toast = useToastStore;
 
 // TODO backend: dados vindos da API
 const produtos = ref([

@@ -9,9 +9,11 @@ import {
   Plus,
   Calendar,
 } from "lucide-vue-next";
+import { useToastStore } from "@/stores/toastStore";
 
 const router = useRouter();
 const authStore = useAuthStore();
+const toast = useToastStore;
 
 const acessoLiberado = ref(false);
 const mostrarModalPin = ref(false);
@@ -120,7 +122,7 @@ function registrarDespesa() {
 
   transacoes.value.unshift(despesa);
   fecharFormulario();
-  alert("Despesa registrada com sucesso!");
+  toast.success("Despesa registrada com sucesso!");
 }
 
 function formatarData(data) {

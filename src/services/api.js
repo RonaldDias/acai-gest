@@ -1,6 +1,6 @@
 import { useAuthStore } from "@/stores/authStore";
 
-const BASE_URL = "http://localhost:3001/api"; // TODO: mover para .env
+const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
 async function request(endpoint, options = {}) {
   const authStore = useAuthStore();

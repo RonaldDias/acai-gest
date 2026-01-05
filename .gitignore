@@ -34,3 +34,5 @@ jsconfig.json
 tailwind.config.js
 .vscode
 public
+node_modules
+.env
