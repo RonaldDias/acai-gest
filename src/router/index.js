@@ -7,6 +7,7 @@ import Estoque from "@/components/dashboard/Estoque.vue";
 import FluxoCaixa from "@/components/dashboard/FluxoCaixa.vue";
 import { useAuthStore } from "@/stores/authStore";
 import Relatorios from "@/components/dashboard/Relatorios.vue";
+import Vendedores from "@/components/dashboard/Vendedores.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -57,6 +58,12 @@ const router = createRouter({
           component: Relatorios,
           meta: { requiresAuth: true },
         },
+        {
+          path: "vendedores",
+          name: "Vendedores",
+          component: Vendedores,
+          meta: { requiresAuth: true, requiresDono: true },
+        },
       ],
     },
   ],
@@ -72,6 +79,11 @@ router.beforeEach((to, from, next) => {
   }
 
   if (isAuthenticated && (to.name === "login" || to.name === "Cadastro")) {
+    next({ name: "Vendas" });
+    return;
+  }
+
+  if (to.meta.requiresDono && authStore.user?.role !== "dono") {
     next({ name: "Vendas" });
     return;
   }

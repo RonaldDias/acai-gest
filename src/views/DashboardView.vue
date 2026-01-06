@@ -7,7 +7,6 @@ import {
   BarChart2,
   LogOut,
   Menu,
-  User,
   FileText,
   Users,
 } from "lucide-vue-next";
@@ -38,15 +37,13 @@ const menuItems = computed(() => {
       route: "/dashboard/fluxo-caixa",
     },
     { name: "Relatórios", icon: FileText, route: "/dashboard/relatorios" },
-  ];
-
-  if (authStore.isDono) {
-    base.push({
+    {
       name: "Vendedores",
-      icon: Users,
       route: "/dashboard/vendedores",
-    });
-  }
+      icon: Users,
+      onlyDono: true,
+    },
+  ];
   return base;
 });
 
@@ -118,15 +115,16 @@ function logout() {
       </div>
 
       <nav class="flex-1 p-2 space-y-2">
-        <div
-          v-for="item in menuItems"
-          :key="item.name"
-          @click="goTo(item.route)"
-          class="flex items-center space-x-3 p-2 rounded cursor-pointer hover:bg-purple-600"
-        >
-          <component :is="item.icon" size="20" />
-          <span v-if="sidebarOpen">{{ item.name }}</span>
-        </div>
+        <template v-for="item in menuItems" :key="item.name">
+          <div
+            v-if="!item.onlyDono || authStore.user?.role === 'dono'"
+            @click="goTo(item.route)"
+            class="flex items-center space-x-3 p-2 rounded cursor-pointer hover:bg-purple-600"
+          >
+            <component :is="item.icon" size="20" />
+            <span v-if="sidebarOpen">{{ item.name }}</span>
+          </div>
+        </template>
       </nav>
 
       <div class="p-2 border-t border-purple-600">

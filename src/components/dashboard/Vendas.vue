@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from "vue";
 import { useAuthStore } from "@/stores/authStore";
 import { useToastStore } from "@/stores/toastStore";
 
-const toast = useToastStore;
+const toast = useToastStore();
 
 const tiposAcai = [
   { label: "Grosso", valor: 25 },

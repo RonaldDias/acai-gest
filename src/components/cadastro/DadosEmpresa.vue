@@ -3,10 +3,12 @@ import { ref, reactive, onMounted, watch } from "vue";
 import { useCadastroStore } from "../../stores/cadastroStore";
 import { Trash2 } from "lucide-vue-next";
 import IMask from "imask";
+import { useToastStore } from "@/stores/toastStore";
 
 const cadastro = useCadastroStore();
 const emit = defineEmits(["next", "back"]);
 const cnpjRef = ref(null);
+const toast = useToastStore();
 
 const empresa = reactive({
   nome: "",
@@ -28,7 +30,7 @@ const handleChange = (e) => {
 };
 
 const adicionarVendedor = () => {
-  empresa.vendedores.push({ nome: "", cpf: "" });
+  empresa.vendedores.push({ nome: "", cpf: "", senha: "" });
 };
 
 const removerVendedor = (index) => {
@@ -57,6 +59,13 @@ const validarCampos = () => {
   erros.quantidadePontos = empresa.quantidadePontos
     ? ""
     : "Informe a quantidade de pontos de venda.";
+
+  for (let v of empresa.vendedores) {
+    if (v.nome && (!v.senha || v.senha.length < 6)) {
+      toast.warning("Senha do vendedor deve ter no mínimo 6 caracteres.");
+      return false;
+    }
+  }
 
   return Object.values(erros).every((e) => e === "");
 };
@@ -114,7 +123,6 @@ watch(
 
 <template>
   <form class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <!-- Nome -->
     <div>
       <label class="block mb-1 text-gray-700 text-sm">Nome da Empresa</label>
       <input
@@ -207,6 +215,14 @@ watch(
             @input="(e) => atualizarVendedor(index, 'cpf', e.target.value)"
             class="w-full border-b py-3 text-gray-700 focus:outline-none focus:border-purple-700"
             placeholder="CPF do vendedor"
+          />
+
+          <input
+            type="password"
+            :value="vendedor.senha"
+            @input="(e) => atualizarVendedor(index, 'senha', e.target.value)"
+            class="w-full border-b py-3 text-gray-700 focus:outline-none focus:border-purple-700"
+            placeholder="Senha inicial (mín. 6 caracteres)"
           />
           <button type="button" @click="removerVendedor(index)">
             <Trash2 class="text-red-600 hover:text-red-800 w-5 h-5" />
