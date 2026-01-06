@@ -16,10 +16,6 @@ function toggleSenha() {
   mostrarSenha.value = !mostrarSenha.value;
 }
 
-function irParaCadastro() {
-  router.push("/cadastro");
-}
-
 async function handleSubmit() {
   if (!email.value || !senha.value) {
     erro.value = "Preencha todos os campos.";
@@ -112,7 +108,7 @@ watch([email, senha], () => {
         <div class="mt-6 text-center text-sm">
           Não possui login?
           <router-link
-            to="/cadastro"
+            to="/cadastro/termos"
             class="text-purple-700 font-semibold hover:underline"
           >
             Cadastre-se

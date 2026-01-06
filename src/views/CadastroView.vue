@@ -1,6 +1,5 @@
-<!-- src/views/CadastroView.vue -->
 <script setup>
-import { ref } from "vue";
+import { onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { Settings, CreditCard, User, Building } from "lucide-vue-next";
 
@@ -21,6 +20,15 @@ const etapaAnterior = () => {
   console.log("Etapa acionada");
   etapa.value = Math.max(etapa.value - 1, 1);
 };
+
+onMounted(() => {
+  // TODO Backend: Verificar se usuário já aceitou termos consultando o banco
+  // GET /api/usuarios/status-termos
+  const aceitouTermos = localStorage.getItem("aceitouTermos");
+  if (!aceitouTermos) {
+    router.push("cadastro/termos");
+  }
+});
 </script>
 
 <template>

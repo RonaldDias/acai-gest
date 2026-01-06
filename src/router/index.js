@@ -8,6 +8,7 @@ import FluxoCaixa from "@/components/dashboard/FluxoCaixa.vue";
 import { useAuthStore } from "@/stores/authStore";
 import Relatorios from "@/components/dashboard/Relatorios.vue";
 import Vendedores from "@/components/dashboard/Vendedores.vue";
+import TermosView from "@/views/TermosView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -65,6 +66,11 @@ const router = createRouter({
           meta: { requiresAuth: true, requiresDono: true },
         },
       ],
+    },
+    {
+      path: "/cadastro/termos",
+      name: "Termos",
+      component: TermosView,
     },
   ],
 });
