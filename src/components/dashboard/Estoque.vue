@@ -3,35 +3,10 @@ import { ref, computed, onMounted } from "vue";
 import { Package, DollarSign, Plus, Minus, Search } from "lucide-vue-next";
 import { useToastStore } from "@/stores/toastStore";
 
-const toast = useToastStore;
+const toast = useToastStore();
 
-// TODO backend: dados vindos da API
-const produtos = ref([
-  {
-    id: 1,
-    nome: "Açaí",
-    quantidade: 45,
-    estoqueMaximo: 100,
-    unidade: "L",
-    precoUnitario: 28.5,
-  },
-  {
-    id: 2,
-    nome: "Farinha",
-    quantidade: 18,
-    estoqueMaximo: 50,
-    unidade: "L",
-    precoUnitario: 22.0,
-  },
-  {
-    id: 3,
-    nome: "Tapioca",
-    quantidade: 12,
-    estoqueMaximo: 80,
-    unidade: "L",
-    precoUnitario: 15.0,
-  },
-]);
+const produtos = ref([]);
+const carregando = ref(false);
 
 const mostrarFormulario = ref(false);
 const novoItem = ref({
@@ -43,6 +18,14 @@ const novoItem = ref({
   precoUnitario: 0,
 });
 
+const mostrarFormEntrada = ref(false);
+const entradaEstoque = ref({
+  produto_id: null,
+  quantidade: 0,
+  custo: null,
+  observacao: "",
+});
+
 const produtosBase = [
   "Açaí",
   "Farinha de Tapioca",
@@ -51,9 +34,8 @@ const produtosBase = [
 ];
 const unidades = ["L", "Kg", "un"];
 
-const carregandoProdutos = ref(false);
-
 function abrirFormAdicionarItem() {
+  mostrarFormEntrada.value = false;
   mostrarFormulario.value = true;
 }
 
@@ -68,11 +50,71 @@ function fecharForm() {
   };
 }
 
-function adicionarItem() {
-  // TODO: Validação e envio para API
-  // Registrar entrada no fluxo de caixa
-  alert("Adicionar item - implementar backend");
-  fecharForm();
+function abrirFormEntrada() {
+  mostrarFormulario.value = false;
+  mostrarFormEntrada.value = true;
+}
+
+function fecharFormEntrada() {
+  mostrarFormEntrada.value = false;
+  entradaEstoque.value = {
+    produto_id: null,
+    quantidade: 0,
+    custo: null,
+    observacao: "",
+  };
+}
+
+async function registrarEntrada() {
+  if (
+    !entradaEstoque.value.produto_id === null ||
+    !entradaEstoque.value.quantidade ||
+    entradaEstoque.value.quantidade <= 0
+  ) {
+    toast.error("Preencha todos os campos obrigatórios");
+    return;
+  }
+
+  try {
+    const response = await fetch("http://localhost:3001/api/products/entrada", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        produto_id: entradaEstoque.value.produto_id,
+        quantidade: parseFloat(entradaEstoque.value.quantidade),
+        custo: entradaEstoque.value.custo
+          ? parseFloat(entradaEstoque.value.custo)
+          : null,
+        observacao: entradaEstoque.value.observacao || null,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      toast.success("Entrada registrada com sucesso!");
+
+      const produtoAtualizado = data.data.produto;
+      const index = produtos.value.findIndex(
+        (p) => p.id === produtoAtualizado.id,
+      );
+
+      if (index !== -1) {
+        produtos.value[index].quantidade = parseFloat(
+          produtoAtualizado.estoque_atual,
+        );
+      }
+
+      fecharForm();
+    } else {
+      toast.error("Erro: " + data.message);
+    }
+  } catch (error) {
+    console.error("Erro ao registrar entrada:", error);
+    toast.error("Erro ao conectar com o servidor.");
+  }
 }
 
 const buscaTexto = ref("");
@@ -111,33 +153,62 @@ function valorTotalProduto(produto) {
 }
 
 onMounted(async () => {
-  // TODO Backend: GET /api/products
-  // carregandoProdutos.value = true;
-  // try {
-  //   const dados = await api.get('/api/products');
-  //   produtos.value = dados;
-  // } catch (error) {
-  //   console.error(error);
-  // } finally {
-  //   carregandoProdutos.value = false;
-  // }
+  carregando.value = true;
+  try {
+    // TODO: pegar ponto_id do authStore ou context
+    const ponto_id = 1;
+
+    const response = await fetch(
+      `http://localhost:3001/api/products?ponto_id=${ponto_id}`,
+    );
+    const data = await response.json();
+
+    if (data.success) {
+      produtos.value = data.data.map((p) => ({
+        id: p.id,
+        nome: p.nome,
+        quantidade: parseFloat(p.estoque_atual),
+        estoqueMaximo: parseFloat(p.estoque_minimo) * 10,
+        unidade: p.unidade === "litro" ? "L" : p.unidade === "kg" ? "kg" : "un",
+        precoUnitario: parseFloat(p.preco_venda),
+      }));
+    }
+  } catch (error) {
+    console.error("Erro ao carregar produtos:", error);
+    toast.error("Erro ao carregar produtos");
+  } finally {
+    carregando.value = false;
+  }
 });
 </script>
 
 <template>
+  <div v-if="carregando" class="text-center py-8">
+    <p class="text-gray-600">Carregando produtos...</p>
+  </div>
   <div class="space-y-6">
-    <div class="flex justify-between items-start">
+    <div class="flex gap-2 items-end justify-between">
       <div>
         <h1 class="text-2xl font-bold text-gray-800">Controle de Estoque</h1>
         <p class="text-gray-600 text-sm">Gerencie seus produtos e insumos</p>
       </div>
-      <button
-        @click="abrirFormAdicionarItem"
-        class="bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-purple-800 transition flex items-center"
-      >
-        <Plus :size="20" class="mr-2" />
-        Adicionar Item
-      </button>
+
+      <div class="flex gap-2">
+        <button
+          @click="abrirFormEntrada"
+          class="bg-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition flex items-center"
+        >
+          <Plus :size="20" class="mr-2" />
+          Entrada de Estoque
+        </button>
+        <button
+          @click="abrirFormAdicionarItem"
+          class="bg-purple-700 text-white px-4 py-2 rounded-lg font-semibold hover:bg-purple-800 transition flex items-center"
+        >
+          <Plus :size="20" class="mr-2" />
+          Adicionar Item
+        </button>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -258,6 +329,82 @@ onMounted(async () => {
           class="w-full bg-purple-700 text-white py-2 rounded-lg font-semibold hover:bg-purple-800 transition"
         >
           Adicionar ao Estoque
+        </button>
+      </div>
+    </div>
+
+    <div v-if="mostrarFormEntrada" class="bg-white rounded-lg shadow p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold text-gray-800">Entrada de Estoque</h2>
+        <button
+          @click="fecharFormEntrada"
+          class="text-gray-500 hover:text-gray-700"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Produto *
+          </label>
+          <select
+            v-model="entradaEstoque.produto_id"
+            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-purple-600"
+          >
+            <option :value="null">Selecione o produto...</option>
+            <option v-for="prod in produtos" :key="prod.id" :value="prod.id">
+              {{ prod.nome }} ({{ prod.quantidade }} {{ prod.unidade }})
+            </option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Quantidade a adicionar *
+          </label>
+          <input
+            v-model.number="entradaEstoque.quantidade"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Ex: 10"
+            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-purple-600"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Custo total (R$)
+          </label>
+          <input
+            v-model.number="entradaEstoque.custo"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Ex: 150.00"
+            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-purple-600"
+          />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Observação
+          </label>
+          <textarea
+            v-model="entradaEstoque.observacao"
+            rows="3"
+            placeholder="Ex: Compra do fornecedor João"
+            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-purple-600"
+          ></textarea>
+        </div>
+
+        <button
+          @click="registrarEntrada"
+          class="w-full bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 transition"
+        >
+          Registrar Entrada
         </button>
       </div>
     </div>

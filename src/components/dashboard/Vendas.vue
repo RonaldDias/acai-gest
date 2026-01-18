@@ -2,23 +2,15 @@
 import { ref, computed, onMounted } from "vue";
 import { useAuthStore } from "@/stores/authStore";
 import { useToastStore } from "@/stores/toastStore";
+import { produtosApi } from "@/services/api.js";
 
 const toast = useToastStore();
 
-const tiposAcai = [
-  { label: "Grosso", valor: 25 },
-  { label: "Médio", valor: 20 },
-  { label: "Popular", valor: 15 },
-];
+const produtos = ref([]);
+const loadingProdutos = ref(false);
+const errorProdutos = ref(null);
 
 const formasPagamento = ["PIX", "Dinheiro", "Débito", "Crédito"];
-
-const produtos = [
-  { id: 1, nome: "Açaí", tipo: "acai" },
-  { id: 2, nome: "Farinha de Tapioca", tipo: "farinha", preco: 3 },
-  { id: 3, nome: "Farinha de Mandioca", tipo: "farinha", preco: 10 },
-  { id: 4, nome: "Outro", tipo: "outro" },
-];
 
 const itensVenda = ref([]);
 
@@ -37,12 +29,17 @@ const totalDinheiroHoje = ref(0);
 const registrandoVenda = ref(false);
 
 const produtoSelecionado = computed(() => {
-  return produtos.find((p) => p.id === venda.value.produtoId);
+  return produtos.value.find((p) => p.id === venda.value.produtoId);
 });
 
-const isAcai = computed(() => produtoSelecionado.value?.tipo === "acai");
-const isFarinha = computed(() => produtoSelecionado.value?.tipo === "farinha");
-const isOutro = computed(() => produtoSelecionado.value?.tipo === "outro");
+const isAcai = computed(() => {
+  const nome = produtoSelecionado.value?.nome?.toLowerCase() || "";
+  return nome.includes("açaí") || nome.includes("açaí");
+});
+const isFarinha = computed(() => {
+  const nome = produtoSelecionado.value?.nome?.toLowerCase() || "";
+  return nome.includes("farinha");
+});
 
 const quantidadeMin = computed(() => {
   if (isAcai.value) return 500;
@@ -76,21 +73,14 @@ const valorTotal = computed(() => {
 function selecionarProduto(produtoId) {
   venda.value.produtoId = produtoId;
   venda.value.quantidade = 0;
-  venda.value.tipoAcai = null;
-  venda.value.outroNome = "";
 
-  const produto = produtos.find((p) => p.id === produtoId);
+  const produto = produtos.value.find((p) => p.id === produtoId);
 
-  if (produto?.preco) {
-    venda.value.precoUnitario = produto.preco;
+  if (produto?.preco_venda) {
+    venda.value.precoUnitario = parseFloat(produto.preco_venda);
   } else {
     venda.value.precoUnitario = 0;
   }
-}
-
-function selecionarTipoAcai(tipo) {
-  venda.value.tipoAcai = tipo.label;
-  venda.value.precoUnitario = tipo.valor;
 }
 
 function incrementarQuantidade() {
@@ -116,16 +106,6 @@ function validarItem() {
     return false;
   }
 
-  if (isAcai.value && !venda.value.tipoAcai) {
-    toast.warning("Selecione o tipo de açaí");
-    return false;
-  }
-
-  if (isOutro.value && !venda.value.outroNome.trim()) {
-    toast.warning("Especifique o produto");
-    return false;
-  }
-
   if (venda.value.quantidade === 0) {
     toast.warning("Informe a quantidade");
     return false;
@@ -146,7 +126,6 @@ function adicionarItem() {
     produtoId: venda.value.produtoId,
     produtoNome: produtoSelecionado.value.nome,
     tipoAcai: venda.value.tipoAcai,
-    outroNome: venda.value.outroNome,
     quantidade: venda.value.quantidade,
     unidade: unidadeMedida.value,
     precoUnitario: venda.value.precoUnitario,
@@ -234,7 +213,29 @@ function formatarQuantidade(qtd, unidade) {
   return `${qtd} ${unidade}`;
 }
 
-onMounted(() => {
+async function carregarProdutos() {
+  loadingProdutos.value = true;
+  errorProdutos.value = null;
+
+  try {
+    const pontoId = 1;
+    const response = await produtosApi.listar(pontoId);
+
+    if (response.success) {
+      produtos.value = response.data;
+    } else {
+      throw new Error(response.message || "Erro ao carregar produtos");
+    }
+  } catch (error) {
+    console.error("Erro ao carregar produtos:", error);
+    toast.error("Erro ao carregar produtos");
+  } finally {
+    loadingProdutos.value = false;
+  }
+}
+
+onMounted(async () => {
+  await carregarProdutos();
   // TODO Backend: GET /api/sales/today
   // GET /api/sales/summary/today
   // GET /api/products quando backend estiver pronto
@@ -305,40 +306,6 @@ onMounted(() => {
               {{ produto.nome }}
             </button>
           </div>
-        </div>
-
-        <div v-if="isAcai">
-          <label class="block text-sm font-medium text-gray-700 mb-2"
-            >Tipo de Açaí</label
-          >
-          <div class="grid grid-cols-3 gap-2">
-            <button
-              v-for="tipo in tiposAcai"
-              :key="tipo.label"
-              @click="selecionarTipoAcai(tipo)"
-              :class="[
-                'p-3 rounded border-2 transition',
-                venda.tipoAcai === tipo.label
-                  ? 'border-purple-600 bg-purple-50'
-                  : 'border-gray-300 hover:border-purple-300',
-              ]"
-            >
-              <div class="font-medium">{{ tipo.label }}</div>
-              <div class="text-sm text-gray-600">R$ {{ tipo.valor }}/L</div>
-            </button>
-          </div>
-        </div>
-
-        <div v-if="isOutro">
-          <label class="block text-sm font-medium text-gray-700 mb-2">
-            Especificar Produto
-          </label>
-          <input
-            v-model="venda.outroNome"
-            type="text"
-            placeholder="Ex: Cupuaçu, Bacaba..."
-            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-purple-600"
-          />
         </div>
 
         <div>

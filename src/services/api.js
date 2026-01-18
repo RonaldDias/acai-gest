@@ -81,4 +81,14 @@ export const vendasApi = {
   },
 };
 
+export const produtosApi = {
+  listar(pontoId) {
+    return api.get(`/products?ponto_id=${pontoId}`);
+  },
+
+  entrada(dados) {
+    return api.post("/products/entrada", dados);
+  },
+};
+
 export default api;
