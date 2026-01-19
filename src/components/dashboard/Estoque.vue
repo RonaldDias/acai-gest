@@ -167,7 +167,7 @@ onMounted(async () => {
       produtos.value = data.data.map((p) => ({
         id: p.id,
         nome: p.nome,
-        quantidade: parseFloat(p.estoque_atual),
+        quantidade: parseFloat(p.quantidade_estoque),
         estoqueMaximo: parseFloat(p.estoque_minimo) * 10,
         unidade: p.unidade === "litro" ? "L" : p.unidade === "kg" ? "kg" : "un",
         precoUnitario: parseFloat(p.preco_venda),

@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useAuthStore } from "@/stores/authStore";
 import { useToastStore } from "@/stores/toastStore";
-import { produtosApi } from "@/services/api.js";
+import { produtosApi, vendasApi } from "@/services/api.js";
 
 const toast = useToastStore();
 
@@ -122,12 +122,20 @@ function validarItem() {
 function adicionarItem() {
   if (!validarItem()) return;
 
+  let quantidadeFinal = venda.value.quantidade;
+  let unidadeFinal = unidadeMedida.value;
+
+  if (unidadeFinal === "ml") {
+    quantidadeFinal = quantidadeFinal / 1000;
+    unidadeFinal = "litro";
+  }
+
   itensVenda.value.push({
     produtoId: venda.value.produtoId,
     produtoNome: produtoSelecionado.value.nome,
     tipoAcai: venda.value.tipoAcai,
-    quantidade: venda.value.quantidade,
-    unidade: unidadeMedida.value,
+    quantidade: quantidadeFinal,
+    unidade: unidadeFinal,
     precoUnitario: venda.value.precoUnitario,
     valorTotal: valorTotal.value,
   });
@@ -151,37 +159,40 @@ async function registrarVenda() {
 
   const authStore = useAuthStore();
 
+  const itensFormatados = itensVenda.value.map((item) => ({
+    produto_id: item.produtoId,
+    quantidade: item.quantidade,
+    preco_unitario: item.precoUnitario,
+  }));
+
   const dadosVenda = {
-    itens: [...itensVenda.value],
-    valorTotal: totalItensVenda.value,
-    formaPagamento: venda.value.formaPagamento,
-    vendedorId: authStore.user?.id,
-    vendedorNome: authStore.user?.nome,
-    data: new Date().toISOString(),
+    ponto_id: 1, // TODO: pegar do usuario
+    vendedor_id: authStore.user?.id || 1,
+    forma_pagamento: venda.value.formaPagamento.toLowerCase(),
+    itens: itensFormatados,
   };
 
   registrandoVenda.value = true;
 
-  // TODO Backend: POST /api/sales
-  // Validar dados
-  // Salvar no banco
-  // Atualizar estoque automaticamente
-  // Retornar venda criada com ID
-  /*
   try {
-    await vendasApi.criar(dadosVenda);
-  } catch (error) {
-    alert("Erro ao resgistrar venda: " + error.message);
-    return
-  }
-  */
-  vendasHoje.value.unshift(dadosVenda);
-  atualizarResumo();
-  itensVenda.value = [];
-  limparFormulario();
+    const response = await vendasApi.criar(dadosVenda);
+    if (response.success) {
+      toast.success("Venda registrada com sucesso!");
 
-  registrandoVenda.value = false;
-  toast.success("Venda registrada com sucesso!");
+      await carregarVendasHoje();
+      await carregarResumoHoje();
+
+      itensVenda.value = [];
+      limparFormulario();
+    } else {
+      throw new Error(response.message || "Erro ao registrar venda");
+    }
+  } catch (error) {
+    console.error("Erro ao registrar venda:", error);
+    toast.error(error.message || "Erro ao registrar venda");
+  } finally {
+    registrandoVenda.value = false;
+  }
 }
 
 function limparFormulario() {
@@ -234,21 +245,41 @@ async function carregarProdutos() {
   }
 }
 
+async function carregarVendasHoje() {
+  try {
+    const pontoId = 1; // TODO: pegar do usuario
+    const response = await vendasApi.listarHoje(pontoId);
+
+    if (response.success) {
+      vendasHoje.value = response.data.map((v) => ({
+        ...v,
+        data: v.data_venda,
+        valorTotal: parseFloat(v.valor_total),
+      }));
+    }
+  } catch (error) {
+    console.error("Erro ao carregar vendas:", error);
+  }
+}
+
+async function carregarResumoHoje() {
+  try {
+    const pontoId = 1; //TODO: pegar do usuario
+    const response = await vendasApi.resumoHoje(pontoId);
+
+    if (response.success) {
+      totalVendasHoje.value = response.data.total_vendas;
+      totalDinheiroHoje.value = response.data.total_faturado;
+    }
+  } catch (error) {
+    console.error("Erro ao carregar resumo:", error);
+  }
+}
+
 onMounted(async () => {
   await carregarProdutos();
-  // TODO Backend: GET /api/sales/today
-  // GET /api/sales/summary/today
-  // GET /api/products quando backend estiver pronto
-  // GET /api/sales/summary/today - Cards de resumo (total vendas e valor)
-  /*
-  try {
-    const vendas = vendasApi.listarHoje();
-    vendasHoje.value = vendas;
-    atualizarResumo();
-  } catch (error) {
-    console.error("Erro ao carregar vendas: ", error);
-  }
-  */
+  await carregarVendasHoje();
+  await carregarResumoHoje();
 });
 </script>
 
@@ -487,7 +518,8 @@ onMounted(async () => {
               </div>
 
               <p class="text-lg font-semibold text-green-600">
-                R$ {{ v.valorTotal.toFixed(2) }}
+                R$
+                {{ parseFloat(v.valor_total || v.valorTotal || 0).toFixed(2) }}
               </p>
             </div>
           </div>

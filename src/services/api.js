@@ -68,12 +68,12 @@ export const api = {
 };
 
 export const vendasApi = {
-  listarHoje() {
-    return api.get("/sales/today");
+  listarHoje(pontoId) {
+    return api.get(`/sales/today?ponto_id=${pontoId}`);
   },
 
-  resumoHoje() {
-    return api.get("/sales/summary/today");
+  resumoHoje(pontoId) {
+    return api.get(`/sales/summary/today?ponto_id=${pontoId}`);
   },
 
   criar(dados) {
