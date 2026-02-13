@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 import { useCadastroStore } from "../../stores/cadastroStore";
 import { useAuthStore } from "@/stores/authStore";
 import { api } from "@/services/api";
+import MercadoPagoConfig from "mercadopago";
 
 const authStore = useAuthStore();
 const erro = ref("");
@@ -16,6 +17,10 @@ const emit = defineEmits(["next", "back"]);
 const forma = ref("");
 const processing = ref(false);
 const paymentOk = ref(false);
+
+const mp = ref(null);
+const cardForm = ref(null);
+const cardToken = ref("");
 
 const qrDataUrl = ref("");
 const pixPayload = ref("");
@@ -35,6 +40,64 @@ function generateQrSvgDataUrl(payload) {
     </text>
   </svg>`;
   return `data:image/svg+xml;base64,${btoa(svg)}`;
+}
+
+function initMercadoPago() {
+  mp.value = new MercadoPagoConfig("TEST-e17b40d4-6ca7-49b7-9170-9c2de81dae56");
+
+  cardForm.value = mp.value.cardForm({
+    amount: preco.value.toString(),
+    iframe: true,
+    form: {
+      id: "form-ckeckout",
+      cardNumber: {
+        id: "form-checkout__cardNumber",
+        placeholder: "Número do cartão",
+      },
+      expirationDate: {
+        id: "form-checkout__expirationDate",
+        placeholder: "MM/YY",
+      },
+      securityCode: {
+        id: "form-checkout__securityCode",
+        placeholder: "CVV",
+      },
+      cardholderName: {
+        id: "form-checkout__cardholderName",
+        placeholder: "Titular do cartão",
+      },
+      issuer: {
+        id: "form-checkout__issuer",
+        placeholder: "Banco emissor",
+      },
+      installments: {
+        id: "form-checkout__installments",
+        placeholder: "Parcelas",
+      },
+      identificationType: {
+        id: "form-checkout__identificationType",
+      },
+      identificationNumber: {
+        id: "form-checkout__identificationNumber",
+        placeholder: "CPF",
+      },
+      cardholderEmail: {
+        id: "form-checkout__cardholderEmail",
+        placeholder: "E-mail",
+      },
+    },
+    callbacks: {
+      onFormMounted: (error) => {
+        if (error) console.error("Erro ao montar formulário:", error);
+      },
+      onSubmit: async (event) => {
+        event.preventDefault();
+        const { token } = cardForm.value.getCardFormData();
+        cardToken.value = token;
+        await processarCartao();
+      },
+    },
+  });
 }
 
 function gerarPix() {
@@ -71,11 +134,32 @@ function stopPixPolling() {
 }
 
 async function processarCartao() {
+  if (!cardToken.value) {
+    erro.value = "Token do cartão não foi gerado";
+    return;
+  }
+
   processing.value = true;
-  await new Promise((r) => setTimeout(r, 1800));
-  processing.value = false;
-  paymentOk.value = true;
-  // TODO: implement real card payment processing with backend
+
+  try {
+    const response = await api.post("/pagamentos/cartao", {
+      empresa_id: cadastro.dados.empresaId,
+      plano: cadastro.dados.plano.tipoPlano,
+      tipo_assinatura: cadastro.dados.plano.tipoAssinatura,
+      card_token_id: cardToken.value,
+    });
+
+    if (response.success) {
+      paymentOk.value = true;
+    } else {
+      erro.value = response.message || "Erro ao processar pagamento";
+    }
+  } catch (error) {
+    console.error("Erro ao processar cartão:", error);
+    erro.value = "Erro ao processar pagamento";
+  } finally {
+    processing.value = false;
+  }
 }
 
 function onSelectForma(value) {
@@ -84,15 +168,23 @@ function onSelectForma(value) {
   qrDataUrl.value = "";
   pixPayload.value = "";
   stopPixPolling();
+
   if (value === "pix") {
     gerarPix();
     startPixPolling();
+  } else if (value === "cartao") {
+    setTimeout(() => initMercadoPago(), 100);
   }
 }
 
 const mostrarModal = ref(false);
 
 async function confirmarCadastro() {
+  if (forma.value === "cartao" && !paymentOk.value) {
+    erro.value = "Complete o pagamento com cartão antes de continuar";
+    return;
+  }
+
   enviando.value = true;
   erro.value = "";
 
@@ -125,6 +217,8 @@ async function confirmarCadastro() {
       authStore.token = response.token;
       authStore.user = response.user;
       authStore.isAuthenticated = true;
+
+      cadastro.dados.empresaId = response.user.empresaId;
 
       cadastro.limparDados();
 
@@ -221,38 +315,38 @@ onBeforeUnmount(() => {
     <div v-if="forma === 'cartao'">
       <div class="p-4 border rounded space-y-3">
         <p class="font-medium text-gray-700">Dados do Cartão</p>
-        <input
-          class="w-full border rounded px-3 py-2"
-          placeholder="Número do cartão"
-          v-model="cadastro.tempCardNumber"
-        />
-        <div class="grid grid-cols-3 gap-2">
-          <input
-            v-model="cadastro.tempCardExpiry"
-            placeholder="MM/AA"
-            class="border rounded px-3 py-2"
-          />
-          <input
-            v-model="cadastro.tempCardName"
-            placeholder="Nome no cartão"
-            class="border rounded px-3 py-2 col-span-2"
-          />
-        </div>
-        <div class="flex justify-between items-center">
-          <input
-            v-model="cadastro.tempCardCvv"
-            placeholder="CVV"
-            class="border rounded px-3 py-2 w-32"
-          />
+        <p class="text-sm text-gray-600 mb-4">
+          Total: <strong>R${{ preco.toFixed(2) }}</strong>
+        </p>
+
+        <form id="form-checkout">
+          <div id="form-checkout__cardNumber" class="mb-3"></div>
+          <div class="grid grid-cols-2 gap-3 mb-3">
+            <div id="form-checkout__expirationDate"></div>
+            <div id="form-checkout__securityCode"></div>
+          </div>
+          <div id="form-checkout__cardholderName" class="mb-3"></div>
+          <div id="form-checkout__cardholderEmail" class="mb-3"></div>
+
+          <select
+            id="form-checkout__identificationType"
+            class="hidden"
+          ></select>
+          <div id="form-checkout__identificationNumber" class="mb-3"></div>
+
+          <select id="form-checkout__issuer" class="hidden"></select>
+          <div id="form-checkout__installments" class="mb-3"></div>
+
           <button
-            @click="processarCartao"
-            class="bg-purple-700 text-white px-4 py-2 rounded"
+            type="submit"
+            class="w-full bg-purple-700 text-white px-4 py-2 rounded mt-3"
             :disabled="processing"
           >
             <span v-if="processing">Processando...</span>
             <span v-else>Processar pagamento</span>
           </button>
-        </div>
+        </form>
+
         <p v-if="paymentOk" class="text-sm text-green-600 mt-2">
           Pagamento confirmado — pronto para finalizar.
         </p>
