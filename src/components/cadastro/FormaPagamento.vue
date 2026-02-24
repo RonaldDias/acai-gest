@@ -4,7 +4,6 @@ import { useRouter } from "vue-router";
 import { useCadastroStore } from "../../stores/cadastroStore";
 import { useAuthStore } from "@/stores/authStore";
 import { api } from "@/services/api";
-import MercadoPagoConfig from "mercadopago";
 
 const authStore = useAuthStore();
 const erro = ref("");
@@ -18,9 +17,8 @@ const forma = ref("");
 const processing = ref(false);
 const paymentOk = ref(false);
 
-const mp = ref(null);
-const cardForm = ref(null);
-const cardToken = ref("");
+const initPoint = ref("");
+const showPaymentModal = ref(false);
 
 const qrDataUrl = ref("");
 const pixPayload = ref("");
@@ -42,62 +40,88 @@ function generateQrSvgDataUrl(payload) {
   return `data:image/svg+xml;base64,${btoa(svg)}`;
 }
 
-function initMercadoPago() {
-  mp.value = new MercadoPagoConfig("TEST-e17b40d4-6ca7-49b7-9170-9c2de81dae56");
+async function abrirPagamentoCartao() {
+  enviando.value = true;
+  erro.value = "";
 
-  cardForm.value = mp.value.cardForm({
-    amount: preco.value.toString(),
-    iframe: true,
-    form: {
-      id: "form-ckeckout",
-      cardNumber: {
-        id: "form-checkout__cardNumber",
-        placeholder: "Número do cartão",
-      },
-      expirationDate: {
-        id: "form-checkout__expirationDate",
-        placeholder: "MM/YY",
-      },
-      securityCode: {
-        id: "form-checkout__securityCode",
-        placeholder: "CVV",
-      },
-      cardholderName: {
-        id: "form-checkout__cardholderName",
-        placeholder: "Titular do cartão",
-      },
-      issuer: {
-        id: "form-checkout__issuer",
-        placeholder: "Banco emissor",
-      },
-      installments: {
-        id: "form-checkout__installments",
-        placeholder: "Parcelas",
-      },
-      identificationType: {
-        id: "form-checkout__identificationType",
-      },
-      identificationNumber: {
-        id: "form-checkout__identificationNumber",
-        placeholder: "CPF",
-      },
-      cardholderEmail: {
-        id: "form-checkout__cardholderEmail",
-        placeholder: "E-mail",
-      },
-    },
-    callbacks: {
-      onFormMounted: (error) => {
-        if (error) console.error("Erro ao montar formulário:", error);
-      },
-      onSubmit: async (event) => {
-        event.preventDefault();
-        const { token } = cardForm.value.getCardFormData();
-        cardToken.value = token;
-        await processarCartao();
-      },
-    },
-  });
+  try {
+    const dadosCadastro = {
+      nome: cadastro.dados.dadosPessoais.nome,
+      cpf: cadastro.dados.dadosPessoais.cpf,
+      telefone: cadastro.dados.dadosPessoais.telefone,
+      email: cadastro.dados.dadosPessoais.email,
+      senha: cadastro.dados.dadosPessoais.senha,
+
+      nomeEmpresa: cadastro.dados.dadosEmpresa.nome,
+      cnpj: cadastro.dados.dadosEmpresa.cnpj,
+      endereco: cadastro.dados.dadosEmpresa.endereco,
+      quantidadePontos: cadastro.dados.dadosEmpresa.quantidadePontos,
+
+      plano: cadastro.dados.plano.tipoPlano,
+      tipoAssinatura: cadastro.dados.plano.tipoAssinatura,
+
+      formaPagamento: "CARTAO",
+    };
+
+    const response = await api.post("/auth/cadastro", dadosCadastro);
+
+    if (response.success && response.init_point) {
+      cadastro.dados.empresaId = response.user.empresaId;
+      cadastro.dados.subscriptionCreated = true;
+
+      const width = 600;
+      const height = 700;
+      const left = screen.width / 2 - width / 2;
+      const top = screen.height / 2 - height / 2;
+
+      window.open(
+        response.init_point,
+        "MercadoPago",
+        `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`,
+      );
+
+      startPaymentPolling();
+    } else {
+      erro.value = response.message || "Erro ao criar assinatura";
+    }
+  } catch (error) {
+    console.error("Erro:", error);
+    erro.value = "Erro ao processar";
+  } finally {
+    enviando.value = false;
+  }
+}
+
+let paymentPollingInterval = null;
+
+function startPaymentPolling() {
+  stopPaymentPolling();
+
+  paymentPollingInterval = setInterval(async () => {
+    try {
+      const response = await api.get(
+        `/auth/usuarios/${cadastro.dados.empresaId}/status`,
+      );
+      if (response.ativo) {
+        paymentOk.value = true;
+        stopPaymentPolling();
+      }
+    } catch (error) {
+      console.error("Erro ao verificar status:", error);
+    }
+  }, 3000);
+}
+
+function stopPaymentPolling() {
+  if (paymentPollingInterval) {
+    clearInterval(paymentPollingInterval);
+    paymentPollingInterval = null;
+  }
+}
+
+function fecharModal() {
+  showPaymentModal.value = false;
+  paymentOk.value = true;
 }
 
 function gerarPix() {
@@ -133,35 +157,6 @@ function stopPixPolling() {
   }
 }
 
-async function processarCartao() {
-  if (!cardToken.value) {
-    erro.value = "Token do cartão não foi gerado";
-    return;
-  }
-
-  processing.value = true;
-
-  try {
-    const response = await api.post("/pagamentos/cartao", {
-      empresa_id: cadastro.dados.empresaId,
-      plano: cadastro.dados.plano.tipoPlano,
-      tipo_assinatura: cadastro.dados.plano.tipoAssinatura,
-      card_token_id: cardToken.value,
-    });
-
-    if (response.success) {
-      paymentOk.value = true;
-    } else {
-      erro.value = response.message || "Erro ao processar pagamento";
-    }
-  } catch (error) {
-    console.error("Erro ao processar cartão:", error);
-    erro.value = "Erro ao processar pagamento";
-  } finally {
-    processing.value = false;
-  }
-}
-
 function onSelectForma(value) {
   forma.value = value;
   paymentOk.value = false;
@@ -173,15 +168,24 @@ function onSelectForma(value) {
     gerarPix();
     startPixPolling();
   } else if (value === "cartao") {
-    setTimeout(() => initMercadoPago(), 100);
+    abrirPagamentoCartao();
   }
 }
 
 const mostrarModal = ref(false);
 
 async function confirmarCadastro() {
-  if (forma.value === "cartao" && !paymentOk.value) {
-    erro.value = "Complete o pagamento com cartão antes de continuar";
+  if (!paymentOk.value) {
+    erro.value = "Aguarde a confirmação do pagamento";
+    return;
+  }
+
+  if (cadastro.dados.subscriptionCreated) {
+    mostrarModal.value = true;
+    setTimeout(() => {
+      mostrarModal.value = false;
+      router.push("/dashboard/vendas");
+    }, 5000);
     return;
   }
 
@@ -241,6 +245,7 @@ async function confirmarCadastro() {
 
 onBeforeUnmount(() => {
   stopPixPolling();
+  stopPaymentPolling();
 });
 </script>
 
@@ -291,7 +296,7 @@ onBeforeUnmount(() => {
           />
           <p class="mt-3 text-sm text-gray-600">Chave Pix (copiar):</p>
           <div
-            class="font-mono bg-gray-100 p-2 mt-1 rounded w-full text-center break-words"
+            class="font-mono bg-gray-100 p-2 mt-1 rounded w-full text-center wrap-break-word"
           >
             {{ pixPayload }}
           </div>
@@ -314,58 +319,39 @@ onBeforeUnmount(() => {
 
     <div v-if="forma === 'cartao'">
       <div class="p-4 border rounded space-y-3">
-        <p class="font-medium text-gray-700">Dados do Cartão</p>
+        <p class="font-medium text-gray-700">Pagamento com Cartão</p>
         <p class="text-sm text-gray-600 mb-4">
-          Total: <strong>R${{ preco.toFixed(2) }}</strong>
+          Total: <strong>R${{ preco.toFixed(2) }}</strong
+          >/mês
         </p>
 
-        <form id="form-checkout">
-          <div id="form-checkout__cardNumber" class="mb-3"></div>
-          <div class="grid grid-cols-2 gap-3 mb-3">
-            <div id="form-checkout__expirationDate"></div>
-            <div id="form-checkout__securityCode"></div>
-          </div>
-          <div id="form-checkout__cardholderName" class="mb-3"></div>
-          <div id="form-checkout__cardholderEmail" class="mb-3"></div>
-
-          <select
-            id="form-checkout__identificationType"
-            class="hidden"
-          ></select>
-          <div id="form-checkout__identificationNumber" class="mb-3"></div>
-
-          <select id="form-checkout__issuer" class="hidden"></select>
-          <div id="form-checkout__installments" class="mb-3"></div>
-
-          <button
-            type="submit"
-            class="w-full bg-purple-700 text-white px-4 py-2 rounded mt-3"
-            :disabled="processing"
-          >
-            <span v-if="processing">Processando...</span>
-            <span v-else>Processar pagamento</span>
-          </button>
-        </form>
-
-        <p v-if="paymentOk" class="text-sm text-green-600 mt-2">
+        <p v-if="enviando" class="text-sm text-yellow-600">
+          Gerando pagamento...
+        </p>
+        <p v-if="paymentOk" class="text-sm text-green-600">
           Pagamento confirmado — pronto para finalizar.
         </p>
       </div>
     </div>
 
-    <div class="flex justify-between">
-      <button type="button" @click="emit('back')" class="text-purple-700">
-        Voltar
-      </button>
-
-      <button
-        type="button"
-        class="bg-purple-700 text-white px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-        :disabled="!paymentOk || enviando"
-        @click="confirmarCadastro"
+    <div
+      v-if="showPaymentModal"
+      class="fixed inset-0 flex items-center justify-center bg-black/50 z-50"
+    >
+      <div
+        class="bg-white rounded shadow w-full max-w-2xl h-[600px] flex flex-col"
       >
-        {{ enviando ? "Enviando..." : "Confirmar Cadastro" }}
-      </button>
+        <div class="flex justify-between items-center p-4 border-b">
+          <h3 class="text-lg font-semibold">Complete o Pagamento</h3>
+          <button
+            @click="fecharModal"
+            class="text-gray-500 hover:text-gray-700"
+          >
+            ✕
+          </button>
+        </div>
+        <iframe :src="initPoint" class="flex-1 w-full" frameborder="0"></iframe>
+      </div>
     </div>
 
     <div class="p-4 border rounded">
@@ -394,6 +380,21 @@ onBeforeUnmount(() => {
           >({{ cadastro.dados.plano.tipoAssinatura }})</span
         >
       </p>
+    </div>
+
+    <div class="flex justify-between">
+      <button type="button" @click="emit('back')" class="text-purple-700">
+        Voltar
+      </button>
+
+      <button
+        type="button"
+        class="bg-purple-700 text-white px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+        :disabled="!paymentOk || enviando"
+        @click="confirmarCadastro"
+      >
+        {{ enviando ? "Enviando..." : "Confirmar Cadastro" }}
+      </button>
     </div>
 
     <div

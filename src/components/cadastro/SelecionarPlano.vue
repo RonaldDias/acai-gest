@@ -54,7 +54,7 @@ function handleSubmit() {
 
   cadastro.atualizarDados({
     plano: {
-      tipoPlano: planoSelecionado.value,
+      tipoPlano: planoSelecionado.value === "basic" ? "basico" : "top",
       tipoAssinatura: assinaturaAnual.value ? "anual" : "mensal",
     },
   });
@@ -139,8 +139,12 @@ function handleSubmit() {
           v-model="assinaturaAnual"
           class="accent-purple-700"
         />
-        <span>Quero assinar anualmente com 10% de desconto</span>
+        <span>Quero pagar anualmente à vista com 10% de desconto</span>
       </label>
+      <p v-if="assinaturaAnual" class="text-sm text-gray-500 mt-1 ml-6">
+        Pagamento único sem juros. Parcelamento em até 12x disponível com juros
+        do cartão.
+      </p>
     </div>
 
     <div class="flex justify-between mt-6">
