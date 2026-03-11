@@ -25,7 +25,7 @@ async function request(endpoint, options = {}) {
     if (response.status === 401) {
       authStore.logout();
       window.location.href = "/";
-      throw new Error("Sessão expirada. Faça login nvoamente.");
+      throw new Error("Sessão expirada. Faça login novamente.");
     }
 
     if (!response.ok) {

@@ -93,9 +93,12 @@ watch([email, senha], () => {
         </div>
 
         <div class="text-right mt-4 text-sm mb-4">
-          <a href="#" class="text-purple-700 hover:underline"
-            >Esqueci minha senha</a
+          <router-link
+            to="/esqueci-senha"
+            class="text-purple-700 hover:underline"
           >
+            Esqueci minha senha
+          </router-link>
         </div>
 
         <button

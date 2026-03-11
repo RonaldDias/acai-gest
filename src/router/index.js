@@ -65,6 +65,11 @@ const router = createRouter({
           component: Vendedores,
           meta: { requiresAuth: true, requiresDono: true },
         },
+        {
+          path: "/:pathMatch(.*)*",
+          name: "NotFound",
+          redirect: "/",
+        },
       ],
     },
     {

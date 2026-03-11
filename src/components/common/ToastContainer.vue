@@ -1,6 +1,5 @@
 <script setup>
 import { useToastStore } from "@/stores/toastStore";
-import { info } from "autoprefixer";
 import { AlertCircle, CheckCircle, Info, XCircle } from "lucide-vue-next";
 
 const toastStore = useToastStore();
