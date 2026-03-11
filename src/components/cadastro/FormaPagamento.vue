@@ -4,7 +4,9 @@ import { useRouter } from "vue-router";
 import { useCadastroStore } from "../../stores/cadastroStore";
 import { useAuthStore } from "@/stores/authStore";
 import { api } from "@/services/api";
+import { useToastStore } from "@/stores/toastStore";
 
+const toast = useToastStore();
 const authStore = useAuthStore();
 const erro = ref("");
 const enviando = ref(false);
@@ -14,7 +16,6 @@ const router = useRouter();
 const emit = defineEmits(["next", "back"]);
 
 const forma = ref("");
-const processing = ref(false);
 const paymentOk = ref(false);
 
 const initPoint = ref("");
@@ -23,7 +24,6 @@ const showPaymentModal = ref(false);
 const qrDataUrl = ref("");
 const pixPayload = ref("");
 let pollingInterval = null;
-let simulatePixResolveTimeout = null;
 
 const preco = computed(() => {
   const plano = cadastro.dados?.plano?.tipoPlano || "basic";
@@ -124,36 +124,63 @@ function fecharModal() {
   paymentOk.value = true;
 }
 
-function gerarPix() {
-  const payload = `ACAI|${Date.now()}|R$${preco.value.toFixed(2)}`;
-  pixPayload.value = payload;
-  qrDataUrl.value = generateQrSvgDataUrl(payload);
+async function gerarPix() {
+  enviando.value = true;
+
+  try {
+    const dadosCadastro = {
+      nome: cadastro.dados.dadosPessoais.nome,
+      cpf: cadastro.dados.dadosPessoais.cpf,
+      telefone: cadastro.dados.dadosPessoais.telefone,
+      email: cadastro.dados.dadosPessoais.email,
+      senha: cadastro.dados.dadosPessoais.senha,
+      nomeEmpresa: cadastro.dados.dadosEmpresa.nome,
+      cnpj: cadastro.dados.dadosEmpresa.cnpj,
+      endereco: cadastro.dados.dadosEmpresa.endereco,
+      quantidadePontos: cadastro.dados.dadosEmpresa.quantidadePontos,
+      plano: cadastro.dados.plano.tipoPlano,
+      tipoAssinatura: cadastro.dados.plano.tipoAssinatura,
+      formaPagamento: "PIX",
+    };
+
+    const response = await api.post("/auth/cadastro", dadosCadastro);
+
+    if (response.success) {
+      cadastro.dados.empresaId = response.user.empresaId;
+      pixPayload.value = response.pagamento.qr_code;
+      qrDataUrl.value = `data:image/png;base64,${response.pagamento.qr_code_base64}`;
+    } else {
+      toast.error(response.message || "Erro ao gerar PIX.");
+    }
+  } catch (e) {
+    toast.error(e.message || "Erro ao gerar PIX.");
+  } finally {
+    enviando.value = false;
+  }
 }
 
 function startPixPolling() {
   stopPixPolling();
 
-  simulatePixResolveTimeout = setTimeout(() => {
-    paymentOk.value = true;
-    stopPixPolling();
-  }, 8000);
-
   pollingInterval = setInterval(async () => {
-    // TODO: backend call to verify PIX payment status
-    if (paymentOk.value) {
-      stopPixPolling();
+    try {
+      const response = await api.get(
+        `/auth/usuarios/${cadastro.dados.empresaId}/status`,
+      );
+      if (response.ativo) {
+        paymentOk.value = true;
+        stopPixPolling();
+      }
+    } catch (e) {
+      console.error("Erro ao verificar status PIX", e);
     }
-  }, 2000);
+  }, 3000);
 }
 
 function stopPixPolling() {
   if (pollingInterval) {
     clearInterval(pollingInterval);
     pollingInterval = null;
-  }
-  if (simulatePixResolveTimeout) {
-    clearTimeout(simulatePixResolveTimeout);
-    simulatePixResolveTimeout = null;
   }
 }
 
