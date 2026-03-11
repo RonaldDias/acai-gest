@@ -9,6 +9,7 @@ import { useAuthStore } from "@/stores/authStore";
 import Relatorios from "@/components/dashboard/Relatorios.vue";
 import Vendedores from "@/components/dashboard/Vendedores.vue";
 import TermosView from "@/views/TermosView.vue";
+import EsqueciSenhaView from "@/views/EsqueciSenhaView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -65,17 +66,23 @@ const router = createRouter({
           component: Vendedores,
           meta: { requiresAuth: true, requiresDono: true },
         },
-        {
-          path: "/:pathMatch(.*)*",
-          name: "NotFound",
-          redirect: "/",
-        },
       ],
     },
     {
       path: "/cadastro/termos",
       name: "Termos",
       component: TermosView,
+    },
+    {
+      path: "/esqueci-senha",
+      name: "EsqueciSenha",
+      component: EsqueciSenhaView,
+      meta: { requiresAuth: false },
+    },
+    {
+      path: "/:pathMatch(.*)*",
+      name: "NotFound",
+      redirect: "/",
     },
   ],
 });
