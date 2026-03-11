@@ -29,7 +29,6 @@ coverage
 
 *.tsbuildinfo
 
-vite.config.js
 jsconfig.json
 tailwind.config.js
 .vscode
