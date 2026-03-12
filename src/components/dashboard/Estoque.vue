@@ -2,7 +2,10 @@
 import { ref, computed, onMounted } from "vue";
 import { Package, DollarSign, Plus, Minus, Search } from "lucide-vue-next";
 import { useToastStore } from "@/stores/toastStore";
+import { useAuthStore } from "@/stores/authStore";
+import { produtosApi } from "@/services/api";
 
+const authStore = useAuthStore();
 const toast = useToastStore();
 
 const produtos = ref([]);
@@ -76,22 +79,14 @@ async function registrarEntrada() {
   }
 
   try {
-    const response = await fetch("http://localhost:3001/api/products/entrada", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        produto_id: entradaEstoque.value.produto_id,
-        quantidade: parseFloat(entradaEstoque.value.quantidade),
-        custo: entradaEstoque.value.custo
-          ? parseFloat(entradaEstoque.value.custo)
-          : null,
-        observacao: entradaEstoque.value.observacao || null,
-      }),
+    const data = await produtosApi.entrada({
+      produto_id: entradaEstoque.value.produto_id,
+      quantidade: parseFloat(entradaEstoque.value.quantidade),
+      custo: entradaEstoque.value.custo
+        ? parseFloat(entradaEstoque.value.custo)
+        : null,
+      observacao: entradaEstoque.value.observacao || null,
     });
-
-    const data = await response.json();
 
     if (data.success) {
       toast.success("Entrada registrada com sucesso!");
@@ -155,13 +150,8 @@ function valorTotalProduto(produto) {
 onMounted(async () => {
   carregando.value = true;
   try {
-    // TODO: pegar ponto_id do authStore ou context
-    const ponto_id = 1;
-
-    const response = await fetch(
-      `http://localhost:3001/api/products?ponto_id=${ponto_id}`,
-    );
-    const data = await response.json();
+    const pontoId = authStore.user?.pontoId;
+    const data = await produtosApi.listar(pontoId);
 
     if (data.success) {
       produtos.value = data.data.map((p) => ({
