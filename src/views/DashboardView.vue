@@ -18,6 +18,7 @@ const cadastro = useCadastroStore();
 const authStore = useAuthStore();
 
 const sidebarOpen = ref(false);
+const mostrarModalLogout = ref(false);
 
 // Simulação de tipo de usuário: 'vendedor' ou 'dono'
 // No futuro, isso deve vir do backend ou da store
@@ -89,8 +90,16 @@ function cancelarModal() {
 }
 
 function logout() {
+  mostrarModalLogout.value = true;
+}
+
+function confirmarLogout() {
   authStore.logout();
   router.push("/");
+}
+
+function cancelarLogout() {
+  mostrarModalLogout.value = false;
 }
 </script>
 
@@ -185,6 +194,30 @@ function logout() {
         <p class="text-xs text-gray-500 mt-4 text-center">
           Tentativas restantes: {{ tentativasRestantes }}/3
         </p>
+      </div>
+    </div>
+
+    <div
+      v-if="mostrarModalLogout"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div class="bg-white rounded-lg p-6 w-96 shadow-xl">
+        <h2 class="text-xl font-bold text-gray-800 mb-4">Sair</h2>
+        <p class="text-gray-600 mb-6">Deseja realmente sair do sistema?</p>
+        <div class="flex space-x-3">
+          <button
+            @click="cancelarLogout"
+            class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+          >
+            Cancelar
+          </button>
+          <button
+            @click="confirmarLogout"
+            class="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
+          >
+            Sair
+          </button>
+        </div>
       </div>
     </div>
   </div>
