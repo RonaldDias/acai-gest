@@ -4,6 +4,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useToastStore } from "@/stores/toastStore";
 import { produtosApi, vendasApi } from "@/services/api.js";
 
+const authStore = useAuthStore();
 const toast = useToastStore();
 
 const produtos = ref([]);
@@ -157,8 +158,6 @@ async function registrarVenda() {
     return;
   }
 
-  const authStore = useAuthStore();
-
   const itensFormatados = itensVenda.value.map((item) => ({
     produto_id: item.produtoId,
     quantidade: item.quantidade,
@@ -166,7 +165,7 @@ async function registrarVenda() {
   }));
 
   const dadosVenda = {
-    ponto_id: 1, // TODO: pegar do usuario
+    ponto_id: authStore.user?.pontoId,
     vendedor_id: authStore.user?.id || 1,
     forma_pagamento: venda.value.formaPagamento.toLowerCase(),
     itens: itensFormatados,
@@ -206,14 +205,6 @@ function limparFormulario() {
   };
 }
 
-function atualizarResumo() {
-  totalVendasHoje.value = vendasHoje.value.length;
-  totalDinheiroHoje.value = vendasHoje.value.reduce(
-    (sum, v) => sum + v.valorTotal,
-    0,
-  );
-}
-
 function formatarQuantidade(qtd, unidade) {
   if (unidade === "ml") {
     if (qtd >= 1000) {
@@ -229,7 +220,7 @@ async function carregarProdutos() {
   errorProdutos.value = null;
 
   try {
-    const pontoId = 1;
+    const pontoId = authStore.user?.pontoId;
     const response = await produtosApi.listar(pontoId);
 
     if (response.success) {
@@ -247,7 +238,7 @@ async function carregarProdutos() {
 
 async function carregarVendasHoje() {
   try {
-    const pontoId = 1; // TODO: pegar do usuario
+    const pontoId = authStore.user?.pontoId;
     const response = await vendasApi.listarHoje(pontoId);
 
     if (response.success) {
@@ -264,7 +255,7 @@ async function carregarVendasHoje() {
 
 async function carregarResumoHoje() {
   try {
-    const pontoId = 1; //TODO: pegar do usuario
+    const pontoId = authStore.user?.pontoId;
     const response = await vendasApi.resumoHoje(pontoId);
 
     if (response.success) {
