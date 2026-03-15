@@ -1,12 +1,17 @@
 <script setup>
 import { onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
+import { useCadastroStore } from "@/stores/cadastroStore";
 import { Settings, CreditCard, User, Building } from "lucide-vue-next";
 
 import DadosPessoais from "../components/cadastro/DadosPessoais.vue";
 import DadosEmpresa from "../components/cadastro/DadosEmpresa.vue";
 import SelecionarPlano from "../components/cadastro/SelecionarPlano.vue";
 import FormaPagamento from "../components/cadastro/FormaPagamento.vue";
+
+const router = useRouter();
+const route = useRoute();
+const cadastro = useCadastroStore();
 
 const etapas = ["Dados Pessoais", "Dados da Empresa", "Plano", "Pagamento"];
 const etapa = ref(1);
@@ -22,11 +27,24 @@ const etapaAnterior = () => {
 };
 
 onMounted(() => {
-  // TODO Backend: Verificar se usuário já aceitou termos consultando o banco
-  // GET /api/usuarios/status-termos
   const aceitouTermos = localStorage.getItem("aceitouTermos");
   if (!aceitouTermos) {
     router.push("cadastro/termos");
+    return;
+  }
+
+  if (route.query.social === "true") {
+    cadastro.atualizarDados({
+      dadosPessoais: {
+        nome: route.query.nome || "",
+        email: route.query.email || "",
+        cpf: "",
+        telefone: "",
+        senha: "",
+        confirmaSenha: "",
+      },
+    });
+    etapa.value = 1;
   }
 });
 </script>

@@ -4,13 +4,16 @@ import { useRouter } from "vue-router";
 
 import { Mail, Facebook, Eye, EyeOff } from "lucide-vue-next";
 import { useAuthStore } from "@/stores/authStore";
+import { useToastStore } from "@/stores/toastStore";
 
 const email = ref("");
 const senha = ref("");
 const erro = ref("");
 const mostrarSenha = ref(false);
+
 const router = useRouter();
 const authStore = useAuthStore();
+const toast = useToastStore();
 
 function toggleSenha() {
   mostrarSenha.value = !mostrarSenha.value;
@@ -38,6 +41,41 @@ watch([email, senha], () => {
     erro.value = "";
   }
 });
+
+function abrirPopup(provider) {
+  const url = `https://acaigest.com.br/api/auth/${provider}`;
+  const popup = window.open(
+    url,
+    "oauth",
+    "width=500,height=600,left=400,top=100",
+  );
+
+  window.addEventListener("message", async (event) => {
+    if (event.origin !== "https://acaigest.com.br") return;
+
+    const data = event.data;
+
+    if (!data.success) {
+      toast.error(data.message || "Erro na autenticação");
+      return;
+    }
+
+    if (data.tipo === "login") {
+      authStore.token = data.token;
+      authStore.user = data.user;
+      authStore.isAuthenticated = true;
+      router.push("/dashboard/vendas");
+    } else if (data.tipo === "cadastro") {
+      router.push(
+        {
+          name: "Cadastro",
+          query: { email: data.email, nome: data.nome, social: true },
+        },
+        { once: true },
+      );
+    }
+  });
+}
 </script>
 
 <template>
@@ -122,11 +160,15 @@ watch([email, senha], () => {
 
         <div class="flex justify-center mt-3 space-x-4">
           <button
+            type="button"
+            @click="abrirPopup('google')"
             class="cursor-pointer text-purple-700 hover:text-purple-900 text-xl"
           >
             <Mail class="w-6 h-6" />
           </button>
           <button
+            type="button"
+            @click="abrirPopup('facebook')"
             class="cursor-pointer text-purple-700 hover:text-purple-900 text-xl"
           >
             <Facebook class="w-6 h-6" />
