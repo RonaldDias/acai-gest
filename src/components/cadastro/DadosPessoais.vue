@@ -38,6 +38,15 @@ onMounted(() => {
   if (telefoneRef.value) {
     IMask(telefoneRef.value, { mask: "(00) 00000-0000" });
   }
+
+  const cadastro = useCadastroStore();
+  if (cadastro.dados?.dadosPessoais?.nome) {
+    dados.nome = cadastro.dados.dadosPessoais.nome;
+  }
+
+  if (cadastro.dados?.dadosPessoais?.email) {
+    dados.email = cadastro.dados.dadosPessoais.email;
+  }
 });
 
 function validarEmail(email) {
