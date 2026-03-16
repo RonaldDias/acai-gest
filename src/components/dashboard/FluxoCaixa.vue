@@ -2,6 +2,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/authStore";
+import api from "@/services/api";
 import {
   TrendingUp,
   TrendingDown,
@@ -13,16 +14,8 @@ import { useToastStore } from "@/stores/toastStore";
 
 const router = useRouter();
 const authStore = useAuthStore();
-const toast = useToastStore;
-
-const acessoLiberado = ref(false);
-const mostrarModalPin = ref(false);
-const pinDigitado = ref("");
-const tentativasRestantes = ref(3);
-const erroPin = ref("");
-
-// TODO Backend: PIN virá da API do dono, gerado automaticamente e enviado por email
-const PIN_TEMPORARIO = "1234";
+const toast = useToastStore();
+const summary = ref({});
 
 const mostrarFormulario = ref(false);
 const categoriasDespesa = [
@@ -47,50 +40,59 @@ const periodoFiltro = ref("7dias");
 const dataInicio = ref("");
 const dataFim = ref("");
 
-// TODO: Dados vindo da API, Venda registrada → Backend salva
-// → Backend cria entrada automática no fluxo de caixa
-// Receitas virão automaticamente das vendas registradas
-const transacoes = ref([]);
+function resolverPeriodo() {
+  const hoje = new Date();
+  const fim = hoje.toISOString().split("T")[0];
 
-const totalReceitas = computed(() => {
-  return transacoes.value
-    .filter((t) => t.tipo === "receita")
-    .reduce((sum, t) => sum + t.valor, 0);
-});
+  if (periodoFiltro.value === "hoje") {
+    return { inicio: fim, fim };
+  }
 
-const totalDespesas = computed(() => {
-  return transacoes.value
-    .filter((t) => t.tipo === "despesa")
-    .reduce((sum, t) => sum + t.valor, 0);
-});
+  if (periodoFiltro.value === "7dias") {
+    const inicio = new Date();
+    inicio.setDate(hoje.getDate() - 6);
+    return { inicio: inicio.toISOString().split("T")[0], fim };
+  }
 
-const lucro = computed(() => totalReceitas.value - totalDespesas.value);
+  if (periodoFiltro.value === "30dias") {
+    const inicio = new Date();
+    inicio.setDate(hoje.getDate() - 29);
+    return { inicio: inicio.toISOString().split("T")[0], fim };
+  }
 
-const transacoesFiltradas = computed(() => {
-  // TODO: Implementar filtro por período
-  return transacoes.value.sort((a, b) => new Date(b.data) - new Date(a.data));
-});
-
-function validarPin() {
-  if (pinDigitado.value === PIN_TEMPORARIO) {
-    acessoLiberado.value = true;
-    mostrarModalPin.value = false;
-    erroPin.value = "";
-    authStore.validarPin();
-  } else {
-    tentativasRestantes.value--;
-
-    if (tentativasRestantes.value === 0) {
-      router.push("/dashboard/vendas");
-    } else {
-      erroPin.value = `PIN incorreto. ${tentativasRestantes.value} tentativa(s) restante(s).`;
-      pinDigitado.value = "";
-    }
+  if (periodoFiltro.value === "personalizado") {
+    return { inicio: dataInicio.value, fim: dataFim.value };
   }
 }
 
-function cancelarAcesso() {
-  router.push("/dashboard/vendas");
+const transacoes = ref([]);
+
+const totalReceitas = computed(() => summary.value.revenues ?? 0);
+
+const totalDespesas = computed(() => summary.value.expenses ?? 0);
+
+const lucro = computed(() => summary.value.balance ?? 0);
+
+const transacoesFiltradas = computed(() => {
+  return [...transacoes.value].sort(
+    (a, b) => new Date(b.data) - new Date(a.data),
+  );
+});
+
+async function carregarFluxo() {
+  const pontoId = authStore.user?.pontoId;
+  const { inicio, fim } = resolverPeriodo();
+
+  const { data } = await api.get("/relatorios/fluxo-caixa", {
+    params: {
+      ponto_id: pontoId,
+      data_inicio: inicio,
+      data_fim: fim,
+    },
+  });
+
+  transacoes.value = data.data;
+  summary.value = data.summary;
 }
 
 function abrirFormulario() {
@@ -107,20 +109,18 @@ function fecharFormulario() {
   };
 }
 
-function registrarDespesa() {
-  // TODO Backend: POST /api/despesas
-  // Validação dos campos
+async function registrarDespesa() {
+  const pontoId = authStore.user?.pontoId;
 
-  const despesa = {
-    id: Date.now(),
-    tipo: "despesa",
+  await api.post("/despesas", {
+    ponto_id: pontoId,
     categoria: novaDespesa.value.categoria,
     descricao: novaDespesa.value.descricao,
     valor: novaDespesa.value.valor,
     data: new Date(novaDespesa.value.data).toISOString(),
-  };
+  });
 
-  transacoes.value.unshift(despesa);
+  await carregarFluxo();
   fecharFormulario();
   toast.success("Despesa registrada com sucesso!");
 }
@@ -134,17 +134,7 @@ function formatarData(data) {
 }
 
 onMounted(() => {
-  if (authStore.user?.role === "dono") {
-    acessoLiberado.value = true;
-  } else if (authStore.pinValidado) {
-    acessoLiberado.value = true;
-  } else {
-    mostrarModalPin.value = true;
-  }
-
-  // TODO Backend: GET /api/transacoes (receitas + despesas)
-  // GET /api/vendas (para receitas)
-  // GET /api/despesas (para despesas)
+  carregarFluxo();
 });
 </script>
 

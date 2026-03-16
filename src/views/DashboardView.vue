@@ -60,8 +60,8 @@ function goTo(route) {
 }
 
 function validarSenhaModal() {
-  const PIN_CORRETO = "1234"; // TODO: Backend gera e envia por email
-  if (senhaModal.value === PIN_CORRETO) {
+  const pin = authStore.user?.pin;
+  if (senhaModal.value === pin) {
     mostrarModalSenha.value = false;
     router.push("/dashboard/fluxo-caixa");
     tentativasRestantes.value = 3;
@@ -164,7 +164,7 @@ function cancelarLogout() {
         <input
           v-model="senhaModal"
           type="password"
-          placeholder="Digite o PIN (1234)"
+          placeholder="Digite o PIN:"
           maxlength="6"
           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent mb-2"
           @keyup.enter="validarSenhaModal"

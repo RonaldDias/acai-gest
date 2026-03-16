@@ -89,6 +89,18 @@ export const produtosApi = {
   entrada(dados) {
     return api.post("/products/entrada", dados);
   },
+
+  criar(dados) {
+    return api.post("/products", dados);
+  },
+
+  atualizar(id, dados) {
+    return api.put(`/products/${id}`, dados);
+  },
+
+  desativar(id) {
+    return api.delete(`/products/${id}`);
+  },
 };
 
 export default api;

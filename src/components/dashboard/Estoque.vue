@@ -10,13 +10,14 @@ const toast = useToastStore();
 
 const produtos = ref([]);
 const carregando = ref(false);
+const produtoEditando = ref(null);
 
 const mostrarFormulario = ref(false);
 const novoItem = ref({
   nome: "",
   outroNome: "",
   quantidade: 0,
-  estoqueMaximo: 0,
+  estoqueMinimo: 0,
   unidade: "L",
   precoUnitario: 0,
 });
@@ -37,6 +38,101 @@ const produtosBase = [
 ];
 const unidades = ["L", "Kg", "un"];
 
+const buscaTexto = ref("");
+
+const totalItens = computed(() => produtos.value.length);
+
+const valorTotal = computed(() => {
+  return produtos.value.reduce(
+    (sum, p) => sum + p.quantidade * p.precoUnitario,
+    0,
+  );
+});
+
+const produtosFiltrados = computed(() => {
+  return produtos.value.filter((p) => {
+    const matchBusca = p.nome
+      .toLowerCase()
+      .includes(buscaTexto.value.toLowerCase());
+    return matchBusca;
+  });
+});
+
+function abrirFormEdicao(produto) {
+  produtoEditando.value = { ...produto };
+}
+
+async function salvarEdicao() {
+  try {
+    const data = await produtosApi.atualizar(produtoEditando.value.id, {
+      nome: produtoEditando.value.nome,
+      preco: produtoEditando.value.precoUnitario,
+      estoque_minimo: produtoEditando.value.estoqueMinimo,
+    });
+
+    if (data.success) {
+      const index = produtos.value.findIndex(
+        (p) => p.id === produtoEditando.value.id,
+      );
+      if (index !== -1) {
+        produtos.value[index] = {
+          ...produtos.value[index],
+          nome: data.data.nome,
+          precoUnitario: parseFloat(data.data.preco),
+          estoqueMinimo: parseFloat(data.data.estoque_minimo),
+        };
+      }
+
+      produtoEditando.value = null;
+      toast.success("Produto atualizado com sucesso!");
+    }
+  } catch (error) {
+    toast.error("Erro ao atualizar produto.");
+  }
+}
+
+async function adicionarItem() {
+  const nome =
+    novoItem.value.nome === "Outro"
+      ? novoItem.value.outroNome
+      : novoItem.value.nome;
+
+  if (!nome || !novoItem.value.unidade || !novoItem.value.precoUnitario) {
+    toast.warning("Preencha todos os campos obrigatórios.");
+    return;
+  }
+
+  const unidadeMap = { L: "litro", Kg: "kg", un: "unidade" };
+
+  try {
+    const data = await produtosApi.criar({
+      ponto_id: authStore.user?.pontoId,
+      nome,
+      tipo: null,
+      unidade: unidadeMap[novoItem.value.unidade],
+      preco: novoItem.value.precoUnitario,
+      quantidade_inicial: novoItem.value.quantidade,
+      estoque_minimo: novoItem.value.estoqueMinimo,
+    });
+
+    if (data.success) {
+      produtos.value.push({
+        id: data.data.id,
+        nome: data.data.nome,
+        quantidade: parseFloat(data.data.quantidade_estoque),
+        estoqueMinimo: parseFloat(data.data.estoque_minimo),
+        unidade: novoItem.value.unidade,
+        precoUnitario: parseFloat(data.data.preco),
+      });
+
+      toast.success("Produto adicionado com sucesso!");
+      fecharForm();
+    }
+  } catch (error) {
+    toast.error("Erro ao adicionar produto.");
+  }
+}
+
 function abrirFormAdicionarItem() {
   mostrarFormEntrada.value = false;
   mostrarFormulario.value = true;
@@ -48,6 +144,7 @@ function fecharForm() {
     nome: "",
     outroNome: "",
     quantidade: 0,
+    estoqueMinimo: 0,
     unidade: "L",
     precoUnitario: 0,
   };
@@ -70,7 +167,7 @@ function fecharFormEntrada() {
 
 async function registrarEntrada() {
   if (
-    !entradaEstoque.value.produto_id === null ||
+    entradaEstoque.value.produto_id === null ||
     !entradaEstoque.value.quantidade ||
     entradaEstoque.value.quantidade <= 0
   ) {
@@ -112,32 +209,10 @@ async function registrarEntrada() {
   }
 }
 
-const buscaTexto = ref("");
-
-const totalItens = computed(() => produtos.value.length);
-
-const valorTotal = computed(() => {
-  return produtos.value.reduce(
-    (sum, p) => sum + p.quantidade * p.precoUnitario,
-    0,
-  );
-});
-
-const produtosFiltrados = computed(() => {
-  return produtos.value.filter((p) => {
-    const matchBusca = p.nome
-      .toLowerCase()
-      .includes(buscaTexto.value.toLowerCase());
-    return matchBusca;
-  });
-});
-
 function getStatusEstoque(produto) {
-  const percentual = (produto.quantidade / produto.estoqueMaximo) * 100;
-
-  if (percentual < 20) {
+  if (pproduto.quantidade <= produto.estoqueMinimo) {
     return { classe: "bg-red-100 text-red-800", label: "Crítico" };
-  } else if (percentual < 30) {
+  } else if (produto.quantidade <= produto.estoqueMinimo * 1.5) {
     return { classe: "bg-yellow-100 text-yellow-800", label: "Baixo" };
   }
   return null;
@@ -145,6 +220,19 @@ function getStatusEstoque(produto) {
 
 function valorTotalProduto(produto) {
   return produto.quantidade * produto.precoUnitario;
+}
+
+async function desativarProduto(id) {
+  try {
+    const data = await produtosApi.desativar(id);
+
+    if (data.success) {
+      produtos.value = produtos.value.filter((p) => p.id !== id);
+      toast.success("Produto desativado com sucesso!");
+    }
+  } catch (error) {
+    toast.error("Erro ao desativar produto.");
+  }
 }
 
 onMounted(async () => {
@@ -158,9 +246,9 @@ onMounted(async () => {
         id: p.id,
         nome: p.nome,
         quantidade: parseFloat(p.quantidade_estoque),
-        estoqueMaximo: parseFloat(p.estoque_minimo) * 10,
+        estoqueMinimo: parseFloat(p.estoque_minimo),
         unidade: p.unidade === "litro" ? "L" : p.unidade === "kg" ? "kg" : "un",
-        precoUnitario: parseFloat(p.preco_venda),
+        precoUnitario: parseFloat(p.preco),
       }));
     }
   } catch (error) {
@@ -275,10 +363,10 @@ onMounted(async () => {
 
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2"
-              >Estoque Máximo</label
+              >Estoque Mínimo</label
             >
             <input
-              v-model.number="novoItem.estoqueMaximo"
+              v-model.number="novoItem.estoqueMinimo"
               type="number"
               min="0"
               step="0.01"
@@ -399,6 +487,66 @@ onMounted(async () => {
       </div>
     </div>
 
+    <div v-if="produtoEditando" class="bg-white rounded-lg shadow p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold text-gray-800">Editar Produto</h2>
+        <button
+          @click="produtoEditando = null"
+          class="text-gray-500 hover:text-gray-700"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2"
+            >Nome</label
+          >
+          <input
+            v-model="produtoEditando.nome"
+            type="text"
+            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-purple-600"
+          />
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Preço (R$)</label
+            >
+            <input
+              v-model.number="produtoEditando.precoUnitario"
+              type="number"
+              min="0"
+              step="0.01"
+              class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-purple-600"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Estoque Mínimo</label
+            >
+            <input
+              v-model.number="produtoEditando.estoqueMinimo"
+              type="number"
+              min="0"
+              step="0.01"
+              class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-purple-600"
+            />
+          </div>
+        </div>
+
+        <button
+          @click="salvarEdicao"
+          class="w-full bg-purple-700 text-white py-2 rounded-lg font-semibold hover:bg-purple-800 transition"
+        >
+          Salvar Alterações
+        </button>
+      </div>
+    </div>
+
     <div class="bg-white rounded-lg shadow p-4">
       <div class="flex flex-col md:flex-row gap-4">
         <div class="flex-1 relative">
@@ -459,9 +607,23 @@ onMounted(async () => {
                 </div>
               </div>
 
-              <p class="text-lg font-semibold text-gray-800">
-                R$ {{ valorTotalProduto(produto).toFixed(2) }}
-              </p>
+              <div class="flex items-center gap-4">
+                <p class="text-lg font-semibold text-gray-800">
+                  R$ {{ valorTotalProduto(produto).toFixed(2) }}
+                </p>
+                <button
+                  @click="abrirFormEdicao(produto)"
+                  class="text-purple-600 hover:text-purple-800 text-sm font-medium"
+                >
+                  Editar
+                </button>
+                <button
+                  @click="desativarProduto(produto.id)"
+                  class="text-red-500 hover:text-red-700 text-sm font-medium"
+                >
+                  Desativar
+                </button>
+              </div>
             </div>
           </div>
         </div>
