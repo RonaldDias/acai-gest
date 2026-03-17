@@ -208,7 +208,7 @@ async function registrarEntrada() {
         );
       }
 
-      fecharForm();
+      fecharFormEntrada();
     } else {
       toast.error("Erro: " + data.message);
     }
