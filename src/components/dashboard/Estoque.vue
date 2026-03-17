@@ -204,7 +204,7 @@ async function registrarEntrada() {
 
       if (index !== -1) {
         produtos.value[index].quantidade = parseFloat(
-          produtoAtualizado.estoque_atual,
+          produtoAtualizado.quantidade_estoque,
         );
       }
 
