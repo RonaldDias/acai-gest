@@ -16,6 +16,7 @@ const mostrarFormulario = ref(false);
 const novoItem = ref({
   nome: "",
   outroNome: "",
+  tipo: "",
   quantidade: 0,
   estoqueMinimo: 0,
   unidade: "L",
@@ -37,6 +38,8 @@ const produtosBase = [
   "Outro",
 ];
 const unidades = ["L", "Kg", "un"];
+
+const tipos = ["grosso", "médio", "popular", "outro"];
 
 const buscaTexto = ref("");
 
@@ -97,7 +100,12 @@ async function adicionarItem() {
       ? novoItem.value.outroNome
       : novoItem.value.nome;
 
-  if (!nome || !novoItem.value.unidade || !novoItem.value.precoUnitario) {
+  if (
+    !nome ||
+    !novoItem.value.tipo ||
+    !novoItem.value.unidade ||
+    !novoItem.value.precoUnitario
+  ) {
     toast.warning("Preencha todos os campos obrigatórios.");
     return;
   }
@@ -108,7 +116,7 @@ async function adicionarItem() {
     const data = await produtosApi.criar({
       ponto_id: authStore.user?.pontoId,
       nome,
-      tipo: null,
+      tipo: novoItem.value.tipo,
       unidade: unidadeMap[novoItem.value.unidade],
       preco: novoItem.value.precoUnitario,
       quantidade_inicial: novoItem.value.quantidade,
@@ -143,6 +151,7 @@ function fecharForm() {
   novoItem.value = {
     nome: "",
     outroNome: "",
+    tipo: "",
     quantidade: 0,
     estoqueMinimo: 0,
     unidade: "L",
@@ -210,7 +219,7 @@ async function registrarEntrada() {
 }
 
 function getStatusEstoque(produto) {
-  if (pproduto.quantidade <= produto.estoqueMinimo) {
+  if (produto.quantidade <= produto.estoqueMinimo) {
     return { classe: "bg-red-100 text-red-800", label: "Crítico" };
   } else if (produto.quantidade <= produto.estoqueMinimo * 1.5) {
     return { classe: "bg-yellow-100 text-yellow-800", label: "Baixo" };
@@ -331,6 +340,21 @@ onMounted(async () => {
             <option value="">Selecione...</option>
             <option v-for="prod in produtosBase" :key="prod" :value="prod">
               {{ prod }}
+            </option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2"
+            >Tipo</label
+          >
+          <select
+            v-model="novoItem.tipo"
+            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-purple-600"
+          >
+            <option value="">Selecione...</option>
+            <option v-for="tipo in tipos" :key="tipo" :value="tipo">
+              {{ tipo.charAt(0).toUpperCase() + tipo.slice(1) }}
             </option>
           </select>
         </div>
