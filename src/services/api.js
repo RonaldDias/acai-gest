@@ -103,4 +103,18 @@ export const produtosApi = {
   },
 };
 
+export const vendedoresApi = {
+  listar(pontoId) {
+    return api.get(`/vendedores?pontoId=${pontoId}`);
+  },
+
+  criar(dados) {
+    return api.post("/vendedores", dados);
+  },
+
+  desativar(id) {
+    return api.delete(`/vendedores/${id}`);
+  },
+};
+
 export default api;

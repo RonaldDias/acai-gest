@@ -1,33 +1,19 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { useToastStore } from "@/stores/toastStore";
+import { vendedoresApi } from "@/services/api";
+import { useAuthStore } from "@/stores/authStore";
 
+const authStore = useAuthStore();
 const toast = useToastStore();
 
 const mostrarFormulario = ref(false);
 const novoVendedor = ref({
   nome: "",
   cpf: "",
-  senha: "",
 });
 
-// TODO backend: vendedores vindos da API
-const vendedores = ref([
-  {
-    id: 1,
-    nome: "João Silva",
-    cpf: "123.456.789-00",
-    dataCadastro: "2025-01-01",
-    senha: "acai2025",
-  },
-  {
-    id: 2,
-    nome: "Maria Santos",
-    cpf: "987.654.321-00",
-    dataCadastro: "2025-01-02",
-    senha: "vendas123",
-  },
-]);
+const vendedores = ref([]);
 
 const mostrarModalRemover = ref(false);
 const vendedorParaRemover = ref(null);
@@ -41,27 +27,12 @@ function fecharFormulario() {
   novoVendedor.value = {
     nome: "",
     cpf: "",
-    senha: "",
   };
-}
-
-function gerarSenha() {
-  const chars = "abcdefghijklmnoprstuvwxyz0123456789";
-  let senha = "";
-  for (let i = 0; i < 8; i++) {
-    senha += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  novoVendedor.value.senha = senha;
 }
 
 function validarCPF(cpf) {
   const cpfLimpo = cpf.replace(/\D/g, "");
   return cpfLimpo.length === 11;
-}
-
-function formatarCPF(cpf) {
-  const cpfLimpo = cpf.replace(/\D/g, "");
-  return cpfLimpo.replace(/(\d{3})(\d{3})(\{3})(\d{2})/, "$1.$2.$3-$4");
 }
 
 async function cadastrarVendedor() {
@@ -75,27 +46,37 @@ async function cadastrarVendedor() {
     return;
   }
 
-  if (!novoVendedor.value.senha) {
-    toast.warning("Gere uma senha para o vendedor");
+  if (!novoVendedor.value.nome.trim()) {
+    toast.warning("Informe o nome do vendedor");
     return;
   }
 
-  // TODO Backend: POST /api/vendedores
+  if (!validarCPF(novoVendedor.value.cpf)) {
+    toast.warning("CPF inválido");
+    return;
+  }
+
   try {
-    const vendedor = {
-      id: Date.now(),
+    const data = await vendedoresApi.criar({
       nome: novoVendedor.value.nome,
-      cpf: formatarCPF(novoVendedor.value.cpf),
-      senha: novoVendedor.value.senha,
-      dataCadastro: new Date().toISOString().split("T")[0],
-    };
+      cpf: novoVendedor.value.cpf,
+      pontoId: authStore.user?.pontoId,
+    });
 
-    vendedores.value.push(vendedor);
+    vendedores.value.push({
+      id: data.vendedor.id,
+      nome: data.vendedor.nome,
+      cpf: data.vendedor.cpf,
+      dataCadastro: data.vendedor.createdAt,
+      senha: data.senhaTemporaria,
+    });
 
-    toast.success(`Vendedor ${vendedor.nome} cadastrado com sucesso!`);
+    toast.success(
+      `Vendedor ${data.vendedor.nome} cadastrado! Senha: ${data.senhaTemporaria}`,
+    );
     fecharFormulario();
   } catch (error) {
-    toast.error("Erro ao cadastrar vendedor: " + error.message);
+    toast.error("Erro ao cadastrar vendedor.");
   }
 }
 
@@ -110,21 +91,19 @@ function cancelarRemocao() {
 }
 
 async function removerVendedor() {
-  // TODO Backend: DELETE /api/vendedores/:id
   try {
-    const index = vendedores.value.findIndex(
-      (v) => v.id === vendedorParaRemover.value.id,
+    await vendedoresApi.desativar(vendedorParaRemover.value.id);
+
+    vendedores.value = vendedores.value.filter(
+      (v) => v.id !== vendedorParaRemover.value.id,
     );
 
-    if (index > -1) {
-      const nomeVendedor = vendedores.value[index].nome;
-      vendedores.value.splice(index, 1);
-      toast.success(`Vendedor ${nomeVendedor} removido com sucesso!`);
-    }
-
+    toast.success(
+      `Vendedor ${vendedorParaRemover.value.nome} removido com sucesso!`,
+    );
     cancelarRemocao();
   } catch (error) {
-    toast.error("Erro ao remover vendedor: " + error.message);
+    toast.error("Erro ao remover vendedor.");
   }
 }
 
@@ -133,8 +112,17 @@ function copiarSenha(senha) {
   toast.success("Senha copiada!");
 }
 
-onMounted(() => {
-  // TODO Backend: GET /api/vendedores
+onMounted(async () => {
+  const pontoId = authStore.user?.pontoId;
+  const data = await vendedoresApi.listar(pontoId);
+
+  vendedores.value = data.vendedores.map((v) => ({
+    id: v.id,
+    nome: v.nome,
+    cpf: v.cpf,
+    dataCadastro: v.data_cadastro,
+    senha: null,
+  }));
 });
 </script>
 
@@ -205,31 +193,6 @@ onMounted(() => {
           />
           <p class="text-xs text-gray-500 mt-1">
             O vendedor usará o CPF para fazer login
-          </p>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2"
-            >Senha</label
-          >
-          <div class="flex space-x-2">
-            <input
-              v-model="novoVendedor.senha"
-              type="text"
-              placeholder="Clique em 'Gerar Senha'"
-              readonly
-              class="flex-1 border border-gray-300 rounded px-3 py-2 bg-gray-50"
-            />
-            <button
-              @click="gerarSenha"
-              class="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
-            >
-              Gerar Senha
-            </button>
-          </div>
-          <p class="text-xs text-gray-500 mt-1">
-            Anote a senha ou tire print - o vendedor precisará dela para o
-            primeiro acesso
           </p>
         </div>
 
