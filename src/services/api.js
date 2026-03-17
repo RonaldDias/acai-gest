@@ -23,6 +23,34 @@ async function request(endpoint, options = {}) {
     const data = await response.json();
 
     if (response.status === 401) {
+      const authStore = useAuthStore();
+
+      if (authStore.refreshToken) {
+        try {
+          const refreshResponse = await fetch(`${BASE_URL}/auth/refresh`, {
+            method: "POST",
+            headers: { "Content=Type": "application/json" },
+            body: JSON.stringify({ refreshToken: authStore.refreshToken }),
+          });
+
+          const refreshData = await refreshResponse.json();
+
+          if (refreshData.success) {
+            authStore.token = refreshData.token;
+
+            const retryResponse = await fetch(`${BASE_URL}${endpoint}`, {
+              ...options,
+              headers: {
+                ...headers,
+                Authorization: `Bearer ${refreshData.token}`,
+              },
+            });
+
+            return await retryResponse.json();
+          }
+        } catch (error) {}
+      }
+
       authStore.logout();
       window.location.href = "/";
       throw new Error("Sessão expirada. Faça login novamente.");

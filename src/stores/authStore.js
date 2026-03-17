@@ -4,6 +4,7 @@ import { api } from "@/services/api";
 export const useAuthStore = defineStore("auth", {
   state: () => ({
     token: null,
+    refreshToken: null,
     user: null,
     isAuthenticated: false,
     pinValidado: false,
@@ -24,6 +25,7 @@ export const useAuthStore = defineStore("auth", {
 
         if (data.success) {
           this.token = data.token;
+          this.refreshToken = data.refreshToken;
           this.user = data.user;
           this.isAuthenticated = true;
 
@@ -41,6 +43,7 @@ export const useAuthStore = defineStore("auth", {
 
     logout() {
       this.token = null;
+      this.refreshToken = null;
       this.user = null;
       this.isAuthenticated = false;
       this.pinValidado = false;
