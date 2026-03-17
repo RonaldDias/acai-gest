@@ -254,6 +254,7 @@ onMounted(async () => {
       produtos.value = data.data.map((p) => ({
         id: p.id,
         nome: p.nome,
+        tipo: p.tipo,
         quantidade: parseFloat(p.quantidade_estoque),
         estoqueMinimo: parseFloat(p.estoque_minimo),
         unidade: p.unidade === "litro" ? "L" : p.unidade === "kg" ? "kg" : "un",
@@ -616,7 +617,8 @@ onMounted(async () => {
                 <div>
                   <p class="font-medium text-gray-800">{{ produto.nome }}</p>
                   <p class="text-sm text-gray-500">
-                    {{ produto.quantidade }} {{ produto.unidade }} · R$
+                    {{ produto.tipo }} · {{ produto.quantidade }}
+                    {{ produto.unidade }} · R$
                     {{ produto.precoUnitario.toFixed(2) }}/un
                     <span
                       v-if="getStatusEstoque(produto)"
