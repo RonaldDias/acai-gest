@@ -77,9 +77,6 @@ function selecionarProduto(produtoId) {
 
   const produto = produtos.value.find((p) => p.id === produtoId);
 
-  console.log("produto encontrado:", produto);
-  console.log("preco:", produto?.preco);
-
   if (produto?.preco) {
     venda.value.precoUnitario = parseFloat(produto.preco);
   } else {
@@ -249,6 +246,11 @@ async function carregarVendasHoje() {
         ...v,
         data: v.data_venda,
         valorTotal: parseFloat(v.valor_total),
+        formaPagamento: v.forma_pagamento,
+        itens: v.itens.map((item) => ({
+          ...item,
+          produtoNome: item.produto_nome,
+        })),
       }));
     }
   } catch (error) {
