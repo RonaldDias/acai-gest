@@ -372,7 +372,7 @@ onMounted(() => {
 
                 <div>
                   <p class="font-medium text-gray-800">
-                    {{ transacao.descricao }}
+                    {{ transacao.categoria }}
                   </p>
                   <p class="text-sm text-gray-500">
                     {{ transacao.categoria }} ·
