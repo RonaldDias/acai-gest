@@ -174,7 +174,7 @@ onMounted(() => {
     </div>
   </div>
 
-  <div v-if="acessoLiberado" class="space-y-6">
+  <div class="space-y-6">
     <div class="flex justify-between items-start">
       <div>
         <h1 class="text-2xl font-bold text-gray-800">Fluxo de Caixa</h1>
