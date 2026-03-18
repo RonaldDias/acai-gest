@@ -390,7 +390,7 @@ onMounted(() => {
                 ]"
               >
                 {{ transacao.tipo === "receita" ? "+" : "-" }} R$
-                {{ transacao.valor.toFixed(2) }}
+                {{ parseFloat(transacao.valor).toFixed(2) }}
               </p>
             </div>
           </div>
