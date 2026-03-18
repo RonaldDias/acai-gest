@@ -77,8 +77,11 @@ function selecionarProduto(produtoId) {
 
   const produto = produtos.value.find((p) => p.id === produtoId);
 
-  if (produto?.preco_venda) {
-    venda.value.precoUnitario = parseFloat(produto.preco_venda);
+  console.log("produto encontrado:", produto);
+  console.log("preco:", produto?.preco);
+
+  if (produto?.preco) {
+    venda.value.precoUnitario = parseFloat(produto.preco);
   } else {
     venda.value.precoUnitario = 0;
   }
@@ -364,8 +367,8 @@ onMounted(async () => {
             type="number"
             step="0.01"
             min="0"
-            placeholder="0.00"
-            class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-purple-600"
+            readonly
+            class="w-full border border-gray-300 rounded px-3 py-2 bg-gray-50 text-gray-500 cursor-not-allowed"
           />
         </div>
 
