@@ -19,6 +19,7 @@ const novoItem = ref({
   tipo: "",
   quantidade: 0,
   estoqueMinimo: 0,
+  custo: null,
   unidade: "L",
   precoUnitario: 0,
 });
@@ -121,6 +122,7 @@ async function adicionarItem() {
       preco: novoItem.value.precoUnitario,
       quantidade_inicial: novoItem.value.quantidade,
       estoque_minimo: novoItem.value.estoqueMinimo,
+      custo: novoItem.value.custo ? parseFloat(novoItem.value.custo) : null,
     });
 
     if (data.success) {
@@ -154,6 +156,7 @@ function fecharForm() {
     tipo: "",
     quantidade: 0,
     estoqueMinimo: 0,
+    custo: null,
     unidade: "L",
     precoUnitario: 0,
   };
@@ -382,6 +385,20 @@ onMounted(async () => {
               type="number"
               min="0"
               step="0.01"
+              class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-purple-600"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2"
+              >Custo total (R$)</label
+            >
+            <input
+              v-model.number="novoItem.custo"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Ex: 150.00"
               class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-purple-600"
             />
           </div>
