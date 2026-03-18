@@ -83,12 +83,12 @@ async function carregarFluxo() {
   const pontoId = authStore.user?.pontoId;
   const { inicio, fim } = resolverPeriodo();
 
-  const { data } = await api.get(
+  const resposta = await api.get(
     `/relatorios/fluxo-caixa?ponto_id=${pontoId}&data_inicio=${inicio}&data_fim=${fim}`,
   );
 
-  transacoes.value = data.data;
-  summary.value = data.summary;
+  transacoes.value = resposta.data;
+  summary.value = resposta.summary;
 }
 
 function abrirFormulario() {
