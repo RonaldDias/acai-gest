@@ -11,7 +11,12 @@ const produtos = ref([]);
 const loadingProdutos = ref(false);
 const errorProdutos = ref(null);
 
-const formasPagamento = ["PIX", "Dinheiro", "Débito", "Crédito"];
+const formasPagamento = [
+  { label: "PIX", value: "pix" },
+  { label: "Dinheiro", value: "dinheiro" },
+  { label: "Débito", value: "cartao_debito" },
+  { label: "Crédito", value: "cartao_credito" },
+];
 
 const itensVenda = ref([]);
 
@@ -21,7 +26,7 @@ const venda = ref({
   outroNome: "",
   quantidade: 0,
   precoUnitario: 0,
-  formaPagamento: "PIX",
+  formaPagamento: "pix",
 });
 
 const vendasHoje = ref([]);
@@ -171,6 +176,8 @@ async function registrarVenda() {
     itens: itensFormatados,
   };
 
+  console.log("forma_pagamento enviada:", dadosVenda.forma_pagamento);
+
   registrandoVenda.value = true;
 
   try {
@@ -201,7 +208,7 @@ function limparFormulario() {
     outroNome: "",
     quantidade: 0,
     precoUnitario: 0,
-    formaPagamento: "PIX",
+    formaPagamento: "pix",
   };
 }
 
@@ -427,10 +434,10 @@ onMounted(async () => {
           >
             <option
               v-for="forma in formasPagamento"
-              :key="forma"
-              :value="forma"
+              :key="forma.value"
+              :value="forma.value"
             >
-              {{ forma }}
+              {{ forma.label }}
             </option>
           </select>
         </div>
