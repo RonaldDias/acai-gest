@@ -52,7 +52,7 @@ const router = createRouter({
           path: "fluxo-caixa",
           name: "FluxoCaixa",
           component: FluxoCaixa,
-          meta: { requiresAuth: true, requiresOwner: true },
+          meta: { requiresAuth: true, requiresDono: true },
         },
         {
           path: "relatorios",

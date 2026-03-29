@@ -11,7 +11,6 @@ export const useAuthStore = defineStore("auth", {
   }),
 
   getters: {
-    // TODO: Backend precisa retornar user.role ("dono" ou "vendedor")
     isDono: (state) => state.user?.role === "dono",
     isVendedor: (state) => state.user?.role === "vendedor",
     userName: (state) => state.user?.nome || "",

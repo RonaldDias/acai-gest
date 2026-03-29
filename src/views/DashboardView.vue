@@ -20,9 +20,6 @@ const authStore = useAuthStore();
 const sidebarOpen = ref(false);
 const mostrarModalLogout = ref(false);
 
-// Simulação de tipo de usuário: 'vendedor' ou 'dono'
-// No futuro, isso deve vir do backend ou da store
-
 const mostrarModalSenha = ref(false);
 const senhaModal = ref("");
 const erroModal = ref("");
@@ -72,7 +69,7 @@ function validarSenhaModal() {
       erroModal.value = `PIN incorreto. ${tentativasRestantes.value} tentativa(s) restante(s).`;
       senhaModal.value = "";
     } else {
-      erroModal.value = "Tentativas esgotadas. VOltando para Vendas...";
+      erroModal.value = "Tentativas esgotadas. Voltando para Vendas...";
       setTimeout(() => {
         mostrarModalSenha.value = false;
         router.push("/dashboard/vendas");
