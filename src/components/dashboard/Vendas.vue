@@ -541,7 +541,11 @@ onMounted(async () => {
                         timeZone: "America/Belem",
                       })
                     }}
-                    · {{ v.formaPagamento }}
+                    ·
+                    {{
+                      formasPagamento.find((f) => f.value === v.formaPagamento)
+                        ?.label || v.formaPagamento
+                    }}
                   </p>
                 </div>
               </div>
