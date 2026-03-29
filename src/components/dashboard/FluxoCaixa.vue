@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/authStore";
 import api from "@/services/api";
@@ -39,6 +39,10 @@ const novaDespesa = ref({
 const periodoFiltro = ref("7dias");
 const dataInicio = ref("");
 const dataFim = ref("");
+
+watch(periodoFiltro, () => {
+  carregarFluxo();
+});
 
 function resolverPeriodo() {
   const hoje = new Date();

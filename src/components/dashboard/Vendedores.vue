@@ -240,14 +240,17 @@ onMounted(async () => {
                 new Date(vendedor.dataCadastro).toLocaleDateString("pt-BR")
               }}</span>
             </div>
-            <div class="flex justify-between items-center">
-              <span class="text-gray-600">Senha:</span>
-              <button
-                @click="copiarSenha(vendedor.senha)"
-                class="text-blue-600 hover:text-blue-800 font-mono text-xs bg-blue-50 px-2 py-1 rounded"
-              >
-                {{ vendedor.senha }} 📋
-              </button>
+
+            <div v-if="vendedor.senha" class="flex justify-between items center">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600">Senha:</span>
+                <button
+                  @click="copiarSenha(vendedor.senha)"
+                  class="text-blue-600 hover:text-blue-800 font-mono text-xs bg-blue-50 px-2 py-1 rounded"
+                >
+                  {{ vendedor.senha }} 📋
+                </button>
+              </div>
             </div>
           </div>
         </div>
