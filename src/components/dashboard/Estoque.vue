@@ -319,7 +319,15 @@ onMounted(async () => {
         <DollarSign :size="40" />
         <div>
           <p class="text-sm opacity-90">Valor Total</p>
-          <p class="text-3xl font-bold">R$ {{ valorTotal.toFixed(2) }}</p>
+          <p class="text-3xl font-bold">
+            R$
+            {{
+              valorTotal.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            }}
+          </p>
         </div>
       </div>
     </div>
@@ -636,7 +644,12 @@ onMounted(async () => {
                   <p class="text-sm text-gray-500">
                     {{ produto.tipo }} · {{ produto.quantidade }}
                     {{ produto.unidade }} · R$
-                    {{ produto.precoUnitario.toFixed(2) }}/un
+                    {{
+                      produto.precoUnitario.toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })
+                    }}/un
                     <span
                       v-if="getStatusEstoque(produto)"
                       :class="[
@@ -652,7 +665,13 @@ onMounted(async () => {
 
               <div class="flex items-center gap-4">
                 <p class="text-lg font-semibold text-gray-800">
-                  R$ {{ valorTotalProduto(produto).toFixed(2) }}
+                  R$
+                  {{
+                    valorTotalProduto(produto).toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
+                  }}
                 </p>
                 <button
                   @click="abrirFormEdicao(produto)"

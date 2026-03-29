@@ -168,7 +168,15 @@ onMounted(() => {
         <TrendingUp :size="40" />
         <div>
           <p class="text-sm opacity-90">Receitas</p>
-          <p class="text-3xl font-bold">R$ {{ totalReceitas.toFixed(2) }}</p>
+          <p class="text-3xl font-bold">
+            R$
+            {{
+              totalReceitas.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            }}
+          </p>
         </div>
       </div>
 
@@ -178,7 +186,15 @@ onMounted(() => {
         <TrendingDown :size="40" />
         <div>
           <p class="text-sm opacity-90">Despesas</p>
-          <p class="text-3xl font-bold">R$ {{ totalDespesas.toFixed(2) }}</p>
+          <p class="text-3xl font-bold">
+            R$
+            {{
+              totalDespesas.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            }}
+          </p>
         </div>
       </div>
 
@@ -191,7 +207,15 @@ onMounted(() => {
         <DollarSign :size="40" />
         <div>
           <p class="text-sm opacity-90">Lucro</p>
-          <p class="text-3xl font-bold">R$ {{ lucro.toFixed(2) }}</p>
+          <p class="text-3xl font-bold">
+            R$
+            {{
+              lucro.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            }}
+          </p>
         </div>
       </div>
     </div>
@@ -362,7 +386,12 @@ onMounted(() => {
                 ]"
               >
                 {{ transacao.tipo === "receita" ? "+" : "-" }} R$
-                {{ parseFloat(transacao.valor).toFixed(2) }}
+                {{
+                  parseFloat(transacao.valor).toLocaleString("pt-BR", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                }}
               </p>
             </div>
           </div>

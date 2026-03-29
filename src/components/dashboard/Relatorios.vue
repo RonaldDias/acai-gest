@@ -4,7 +4,15 @@ import { useRouter } from "vue-router";
 import api, { produtosApi } from "@/services/api.js";
 import { useAuthStore } from "@/stores/authStore.js";
 import { useToastStore } from "@/stores/toastStore.js";
-import { FileText, Download, ShoppingCart, Package, TrendingUp, TrendingDown, DollarSign } from "lucide-vue-next";
+import {
+  FileText,
+  Download,
+  ShoppingCart,
+  Package,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+} from "lucide-vue-next";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -42,9 +50,9 @@ const dadosVendas = ref({
   vendasPorDia: [],
   vendasPorHora: [],
   totais: {
-    total_vendas: 0, 
-    valor_total: 0
-  }
+    total_vendas: 0,
+    valor_total: 0,
+  },
 });
 
 const dadosEstoque = ref({
@@ -58,40 +66,40 @@ const dadosFinanceiro = ref({
   summary: {
     revenues: 0,
     expenses: 0,
-    balance: 0
-  }
+    balance: 0,
+  },
 });
 
 function resolverPeriodo() {
   const hoje = new Date();
-  const fim = hoje.toISOString().split('T')[0];
+  const fim = hoje.toISOString().split("T")[0];
 
   if (periodoFiltro.value === "7dias") {
     const inicio = new Date();
     inicio.setDate(hoje.getDate() - 6);
     return {
-      inicio: inicio.toISOString().split('T')[0],
-      fim
-    }
+      inicio: inicio.toISOString().split("T")[0],
+      fim,
+    };
   }
 
   if (periodoFiltro.value === "30dias") {
     const inicio = new Date();
     inicio.setDate(hoje.getDate() - 29);
     return {
-      inicio: inicio.toISOString().split('T')[0],
-      fim
-    }
+      inicio: inicio.toISOString().split("T")[0],
+      fim,
+    };
   }
 
   if (periodoFiltro.value === "customizado") {
     return {
       inicio: dataInicio.value,
-      fim: dataFim.value
-    }
+      fim: dataFim.value,
+    };
   }
 
-  return { inicio: fim, fim }
+  return { inicio: fim, fim };
 }
 
 async function carregarVendas() {
@@ -99,13 +107,15 @@ async function carregarVendas() {
   const { inicio, fim } = resolverPeriodo();
 
   const resposta = await api.get(
-    `/relatorios/vendas?ponto_id=${pontoId}&data_inicio=${inicio}&data_fim=${fim}&agrupar=dia`)
+    `/relatorios/vendas?ponto_id=${pontoId}&data_inicio=${inicio}&data_fim=${fim}&agrupar=dia`,
+  );
 
   dadosVendas.value.totais = resposta.totais;
   dadosVendas.value.vendasPorDia = resposta.data.map((item) => ({
-    dia: new Date(item.periodo).toLocaleDateString("pt-BR", { 
+    dia: new Date(item.periodo).toLocaleDateString("pt-BR", {
       day: "2-digit",
-      month: "2-digit" }),
+      month: "2-digit",
+    }),
     total: parseFloat(item.valor_total),
   }));
 
@@ -114,13 +124,15 @@ async function carregarVendas() {
     produto: `${item.total_vendas} venda(s)`,
     quantidade: parseInt(item.total_quantidade || 0),
     valor: parseFloat(item.valor_total),
-    pagamento: "-"
+    pagamento: "-",
   }));
 
-  dadosVendas.value.vendasPorHora = (resposta.vendasPorHora || []).map((item) => ({
-    hora: `${parseInt(item.hora)}h`,
-    vendas: parseInt(item.total_vendas),
-  }));
+  dadosVendas.value.vendasPorHora = (resposta.vendasPorHora || []).map(
+    (item) => ({
+      hora: `${parseInt(item.hora)}h`,
+      vendas: parseInt(item.total_vendas),
+    }),
+  );
 }
 
 async function carregarEstoque() {
@@ -141,8 +153,8 @@ async function carregarEstoque() {
         quantidade: qtd,
         estoqueMinimo: minimo,
         preco: parseFloat(p.preco),
-        status
-      }
+        status,
+      };
     });
   }
 }
@@ -152,7 +164,7 @@ async function carregarFinanceiro() {
   const { inicio, fim } = resolverPeriodo();
 
   const resposta = await api.get(
-    `/relatorios/fluxo-caixa?ponto_id=${pontoId}&data_inicio=${inicio}&data_fim=${fim}`
+    `/relatorios/fluxo-caixa?ponto_id=${pontoId}&data_inicio=${inicio}&data_fim=${fim}`,
   );
 
   dadosFinanceiro.value.summary = resposta.summary;
@@ -161,16 +173,17 @@ async function carregarFinanceiro() {
     data: new Date(t.data).toLocaleDateString("pt-BR"),
     descricao: t.categoria,
     valor: parseFloat(t.valor),
-    tipo: t.tipo
-  })) 
-  
-  const receitasPorDia = {}
-  const despesasPorDia = {}
+    tipo: t.tipo,
+  }));
+
+  const receitasPorDia = {};
+  const despesasPorDia = {};
 
   resposta.data.forEach((t) => {
-    const dia = new Date(t.data).toLocaleDateString("pt-BR", { day: "2-digit",
-      month: "2-digit"
-     });
+    const dia = new Date(t.data).toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+    });
 
     if (t.tipo === "receita") {
       receitasPorDia[dia] = (receitasPorDia[dia] || 0) + parseFloat(t.valor);
@@ -179,17 +192,21 @@ async function carregarFinanceiro() {
     }
   });
 
-  const todosDias = [...new Set([...Object.keys(receitasPorDia), ...Object.keys(despesasPorDia)])];
+  const todosDias = [
+    ...new Set([
+      ...Object.keys(receitasPorDia),
+      ...Object.keys(despesasPorDia),
+    ]),
+  ];
   dadosFinanceiro.value.receitasPorDia = todosDias.map((dia) => ({
     dia,
-    valor: receitasPorDia[dia] || 0
-    }));
+    valor: receitasPorDia[dia] || 0,
+  }));
   dadosFinanceiro.value.despesasPorDia = todosDias.map((dia) => ({
     dia,
-    valor: despesasPorDia[dia] || 0
-    }));
-  }
-  
+    valor: despesasPorDia[dia] || 0,
+  }));
+}
 
 function validarPin() {
   if (pinDigitado.value === authStore.user?.pin) {
@@ -227,7 +244,7 @@ async function gerarRelatorio() {
       await Promise.all([
         carregarVendas(),
         carregarEstoque(),
-        carregarFinanceiro()
+        carregarFinanceiro(),
       ]);
     }
 
@@ -261,16 +278,24 @@ function exportarPDF() {
     yPos += 10;
 
     doc.setFontSize(10);
-    doc.text(`Total Vendido: R$ ${totalVendido.value.toFixed(2)}`, 15, yPos);
+    doc.text(
+      `Total Vendido: R$ ${totalVendido.value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      15,
+      yPos,
+    );
     doc.text(`Quantidade de Vendas: ${quantidadeVendas.value}`, 80, yPos);
-    doc.text(`Ticket Médio: R$ ${ticketMedio.value.toFixed(2)}`, 145, yPos);
+    doc.text(
+      `Ticket Médio: R$ ${ticketMedio.value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      145,
+      yPos,
+    );
     yPos += 15;
 
     const vendasData = dadosVendas.value.vendas.map((v) => [
       v.data,
       v.produto,
       v.quantidade.toString(),
-      `R$ ${v.valor.toFixed(2)}`,
+      `R$ ${v.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2, minimumFractionDigits: 2 })}`,
       v.pagamento,
     ]);
 
@@ -285,7 +310,11 @@ function exportarPDF() {
     yPos += 10;
 
     doc.setFontSize(10);
-    doc.text(`Valor Total: R$ ${valorTotalEstoque.value.toFixed(2)}`, 15, yPos);
+    doc.text(
+      `Valor Total: R$ ${valorTotalEstoque.value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      15,
+      yPos,
+    );
     doc.text(`Produtos: ${produtosCadastrados.value}`, 80, yPos);
     doc.text(`Críticos: ${produtosCriticos.value}`, 145, yPos);
     yPos += 15;
@@ -308,16 +337,28 @@ function exportarPDF() {
     yPos += 10;
 
     doc.setFontSize(10);
-    doc.text(`Receitas: R$ ${totalReceitas.value.toFixed(2)}`, 15, yPos);
-    doc.text(`Despesas: R$ ${totalDespesas.value.toFixed(2)}`, 80, yPos);
-    doc.text(`Lucro: R$ ${lucro.value.toFixed(2)}`, 145, yPos);
+    doc.text(
+      `Receitas: R$ ${totalReceitas.value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      15,
+      yPos,
+    );
+    doc.text(
+      `Despesas: R$ ${totalDespesas.value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      80,
+      yPos,
+    );
+    doc.text(
+      `Lucro: R$ ${lucro.value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      145,
+      yPos,
+    );
     yPos += 15;
 
     const financeiroData = dadosFinanceiro.value.transacoes.map((t) => [
       t.data,
       t.tipo === "receita" ? "Receita" : "Despesa",
       t.descricao,
-      `${t.tipo === "receita" ? "+" : "-"} R$ ${t.valor.toFixed(2)}`,
+      `${t.tipo === "receita" ? "+" : "-"} R$ ${t.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
     ]);
 
     autoTable(doc, {
@@ -335,7 +376,7 @@ function exportarPDF() {
     yPos += 7;
     doc.setFontSize(10);
     doc.text(
-      `Total: R$ ${totalVendido.value.toFixed(2)} | Qtd: ${quantidadeVendas.value} | Ticket Médio: R$ ${ticketMedio.value.toFixed(2)}`,
+      `Total: R$ ${totalVendido.value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | Qtd: ${quantidadeVendas.value} | Ticket Médio: R$ ${ticketMedio.value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       15,
       yPos,
     );
@@ -346,7 +387,7 @@ function exportarPDF() {
     yPos += 7;
     doc.setFontSize(10);
     doc.text(
-      `Valor: R$ ${valorTotalEstoque.value.toFixed(2)} | Produtos: ${produtosCadastrados.value} | Críticos: ${produtosCriticos.value}`,
+      `Valor: R$ ${valorTotalEstoque.value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | Produtos: ${produtosCadastrados.value} | Críticos: ${produtosCriticos.value}`,
       15,
       yPos,
     );
@@ -357,7 +398,7 @@ function exportarPDF() {
     yPos += 7;
     doc.setFontSize(10);
     doc.text(
-      `Receitas: R$ ${totalReceitas.value.toFixed(2)} | Despesas: R$ ${totalDespesas.value.toFixed(2)} | Lucro: R$ ${lucro.value.toFixed(2)}`,
+      `Receitas: R$ ${totalReceitas.value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | Despesas: R$ ${totalDespesas.value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | Lucro: R$ ${lucro.value.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       15,
       yPos,
     );
@@ -372,7 +413,9 @@ const totalVendido = computed(() => {
   return parseFloat(dadosVendas.value.totais.valor_total || 0);
 });
 
-const quantidadeVendas = computed(() => parseInt(dadosVendas.value.totais.total_vendas || 0));
+const quantidadeVendas = computed(() =>
+  parseInt(dadosVendas.value.totais.total_vendas || 0),
+);
 
 const ticketMedio = computed(() => {
   return quantidadeVendas.value > 0
@@ -586,7 +629,15 @@ onMounted(() => {
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-green-500 text-white rounded-lg p-6">
           <p class="text-sm opacity-90">Total Vendido</p>
-          <p class="text-3xl font-bold">R$ {{ totalVendido.toFixed(2) }}</p>
+          <p class="text-3xl font-bold">
+            R$
+            {{
+              totalVendido.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            }}
+          </p>
         </div>
         <div class="bg-blue-600 text-white rounded-lg p-6">
           <p class="text-sm opacity-90">Quantidade de Vendas</p>
@@ -594,7 +645,15 @@ onMounted(() => {
         </div>
         <div class="bg-purple-700 text-white rounded-lg p-6">
           <p class="text-sm opacity-90">Ticket Médio</p>
-          <p class="text-3xl font-bold">R$ {{ ticketMedio.toFixed(2) }}</p>
+          <p class="text-3xl font-bold">
+            R$
+            {{
+              ticketMedio.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            }}
+          </p>
         </div>
       </div>
 
@@ -611,7 +670,15 @@ onMounted(() => {
             >
               <div class="flex justify-between text-sm">
                 <span class="text-gray-600">{{ item.dia }}</span>
-                <span class="font-medium">R$ {{ item.total.toFixed(2) }}</span>
+                <span class="font-medium"
+                  >R$
+                  {{
+                    item.total.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
+                  }}</span
+                >
               </div>
               <div class="w-full bg-gray-200 rounded-full h-2">
                 <div
@@ -677,7 +744,13 @@ onMounted(() => {
               </div>
 
               <p class="text-lg font-semibold text-green-600">
-                R$ {{ venda.valor.toFixed(2) }}
+                R$
+                {{
+                  venda.valor.toLocaleString("pt-BR", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                }}
               </p>
             </div>
           </div>
@@ -703,7 +776,13 @@ onMounted(() => {
         <div class="bg-purple-700 text-white rounded-lg p-6">
           <p class="text-sm opacity-90">Valor Total em Estoque</p>
           <p class="text-3xl font-bold">
-            R$ {{ valorTotalEstoque.toFixed(2) }}
+            R$
+            {{
+              valorTotalEstoque.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            }}
           </p>
         </div>
         <div class="bg-blue-600 text-white rounded-lg p-6">
@@ -776,11 +855,27 @@ onMounted(() => {
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div class="bg-green-500 text-white rounded-lg p-6">
           <p class="text-sm opacity-90">Receitas</p>
-          <p class="text-3xl font-bold">R$ {{ totalReceitas.toFixed(2) }}</p>
+          <p class="text-3xl font-bold">
+            R$
+            {{
+              totalReceitas.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            }}
+          </p>
         </div>
         <div class="bg-red-500 text-white rounded-lg p-6">
           <p class="text-sm opacity-90">Despesas</p>
-          <p class="text-3xl font-bold">R$ {{ totalDespesas.toFixed(2) }}</p>
+          <p class="text-3xl font-bold">
+            R$
+            {{
+              totalDespesas.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            }}
+          </p>
         </div>
         <div
           :class="[
@@ -789,7 +884,15 @@ onMounted(() => {
           ]"
         >
           <p class="text-sm opacity-90">Lucro</p>
-          <p class="text-3xl font-bold">R$ {{ lucro.toFixed(2) }}</p>
+          <p class="text-3xl font-bold">
+            R$
+            {{
+              lucro.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            }}
+          </p>
         </div>
       </div>
 
@@ -814,7 +917,13 @@ onMounted(() => {
                   ></div>
                 </div>
                 <span class="text-sm font-medium w-24 text-right"
-                  >R$ {{ item.valor.toFixed(2) }}</span
+                  >R$
+                  {{
+                    item.valor.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
+                  }}</span
                 >
               </div>
               <div class="flex items-center space-x-2">
@@ -833,7 +942,10 @@ onMounted(() => {
                 <span class="text-sm font-medium w-24 text-right"
                   >R$
                   {{
-                    dadosFinanceiro.despesasPorDia[index].valor.toFixed(2)
+                    dadosFinanceiro.despesasPorDia[index].valor.toLocaleString(
+                      "pt-BR",
+                      { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+                    )
                   }}</span
                 >
               </div>
@@ -888,7 +1000,12 @@ onMounted(() => {
                 ]"
               >
                 {{ transacao.tipo === "receita" ? "+" : "-" }} R$
-                {{ transacao.valor.toFixed(2) }}
+                {{
+                  transacao.valor.toLocaleString("pt-BR", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })
+                }}
               </p>
             </div>
           </div>
@@ -919,7 +1036,13 @@ onMounted(() => {
           <div class="bg-green-50 rounded-lg p-4">
             <p class="text-sm text-gray-600">Total Vendido</p>
             <p class="text-2xl font-bold text-green-600">
-              R$ {{ totalVendido.toFixed(2) }}
+              R$
+              {{
+                totalVendido.toLocaleString("pt-BR", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
+              }}
             </p>
           </div>
           <div class="bg-blue-50 rounded-lg p-4">
@@ -931,7 +1054,13 @@ onMounted(() => {
           <div class="bg-purple-50 rounded-lg p-4">
             <p class="text-sm text-gray-600">Ticket Médio</p>
             <p class="text-2xl font-bold text-purple-600">
-              R$ {{ ticketMedio.toFixed(2) }}
+              R$
+              {{
+                ticketMedio.toLocaleString("pt-BR", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
+              }}
             </p>
           </div>
         </div>
@@ -946,7 +1075,13 @@ onMounted(() => {
           <div class="bg-purple-50 rounded-lg p-4">
             <p class="text-sm text-gray-600">Valor em Estoque</p>
             <p class="text-2xl font-bold text-purple-600">
-              R$ {{ valorTotalEstoque.toFixed(2) }}
+              R$
+              {{
+                valorTotalEstoque.toLocaleString("pt-BR", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
+              }}
             </p>
           </div>
           <div class="bg-blue-50 rounded-lg p-4">
@@ -973,13 +1108,25 @@ onMounted(() => {
           <div class="bg-green-50 rounded-lg p-4">
             <p class="text-sm text-gray-600">Receitas</p>
             <p class="text-2xl font-bold text-green-600">
-              R$ {{ totalReceitas.toFixed(2) }}
+              R$
+              {{
+                totalReceitas.toLocaleString("pt-BR", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
+              }}
             </p>
           </div>
           <div class="bg-red-50 rounded-lg p-4">
             <p class="text-sm text-gray-600">Despesas</p>
             <p class="text-2xl font-bold text-red-600">
-              R$ {{ totalDespesas.toFixed(2) }}
+              R$
+              {{
+                totalDespesas.toLocaleString("pt-BR", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
+              }}
             </p>
           </div>
           <div
@@ -995,7 +1142,13 @@ onMounted(() => {
                 lucro >= 0 ? 'text-blue-600' : 'text-orange-600',
               ]"
             >
-              R$ {{ lucro.toFixed(2) }}
+              R$
+              {{
+                lucro.toLocaleString("pt-BR", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
+              }}
             </p>
           </div>
         </div>

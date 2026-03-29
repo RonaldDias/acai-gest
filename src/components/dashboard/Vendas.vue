@@ -415,9 +415,21 @@ onMounted(async () => {
                 </p>
                 <p class="text-sm text-gray-600">
                   {{ formatarQuantidade(item.quantidade, item.unidade) }} × R$
-                  {{ item.precoUnitario.toFixed(2) }} =
+                  {{
+                    item.precoUnitario.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })
+                  }}
+                  =
                   <span class="font-medium"
-                    >R$ {{ item.valorTotal.toFixed(2) }}</span
+                    >R$
+                    {{
+                      item.valorTotal.toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })
+                    }}</span
                   >
                 </p>
               </div>
@@ -453,7 +465,13 @@ onMounted(async () => {
           <div class="flex justify-between items-center">
             <span class="text-lg font-medium text-gray-700">Valor Total:</span>
             <span class="text-2xl font-bold text-purple-700">
-              R$ {{ totalItensVenda.toFixed(2) }}
+              R$
+              {{
+                totalItensVenda.toLocaleString("pt-BR", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })
+              }}
             </span>
           </div>
         </div>
@@ -530,7 +548,12 @@ onMounted(async () => {
 
               <p class="text-lg font-semibold text-green-600">
                 R$
-                {{ parseFloat(v.valor_total || v.valorTotal || 0).toFixed(2) }}
+                {{
+                  parseFloat(v.valor_total || v.valorTotal || 0).toLocaleString(
+                    "pt-BR",
+                    { minimumFractionDigits: 2, maximumFractionDigits: 2 },
+                  )
+                }}
               </p>
             </div>
           </div>
