@@ -47,16 +47,6 @@ async function cadastrarVendedor() {
     return;
   }
 
-  if (!novoVendedor.value.nome.trim()) {
-    toast.warning("Informe o nome do vendedor");
-    return;
-  }
-
-  if (!validarCPF(novoVendedor.value.cpf)) {
-    toast.warning("CPF inválido");
-    return;
-  }
-
   try {
     const data = await vendedoresApi.criar({
       nome: novoVendedor.value.nome,
