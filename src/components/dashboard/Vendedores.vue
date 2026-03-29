@@ -31,6 +31,15 @@ function fecharFormulario() {
   };
 }
 
+function mascararCPF(e) {
+  novoVendedor.value.cpf = e.target.value
+    .replace(/\D/g, "")
+    .slice(0, 11)
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d)/, "$1.$2")
+    .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+}
+
 function validarCPF(cpf) {
   const cpfLimpo = cpf.replace(/\D/g, "");
   return cpfLimpo.length === 11;
@@ -180,6 +189,7 @@ onMounted(async () => {
             type="text"
             placeholder="000.000.000-00"
             maxlength="14"
+            @input="mascararCPF"
             class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-purple-600"
           />
           <p class="text-xs text-gray-500 mt-1">
@@ -241,7 +251,10 @@ onMounted(async () => {
               }}</span>
             </div>
 
-            <div v-if="vendedor.senha" class="flex justify-between items center">
+            <div
+              v-if="vendedor.senha"
+              class="flex justify-between items center"
+            >
               <div class="flex justify-between items-center">
                 <span class="text-gray-600">Senha:</span>
                 <button
