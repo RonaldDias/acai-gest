@@ -3,6 +3,7 @@ import { ref, onMounted } from "vue";
 import { useToastStore } from "@/stores/toastStore";
 import { vendedoresApi } from "@/services/api";
 import { useAuthStore } from "@/stores/authStore";
+import { Plus, Users, UserCircle, Trash2 } from "lucide-vue-next";
 
 const authStore = useAuthStore();
 const toast = useToastStore();
