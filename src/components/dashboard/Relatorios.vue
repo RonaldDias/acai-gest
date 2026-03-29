@@ -1,13 +1,16 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
-import { useAuthStore } from "@/stores/authStore";
-import { FileText, Download } from "lucide-vue-next";
+import api, { produtosApi } from "@/services/api.js";
+import { useAuthStore } from "@/stores/authStore.js";
+import { useToastStore } from "@/stores/toastStore.js";
+import { FileText, Download, ShoppingCart, Package, TrendingUp, TrendingDown, DollarSign } from "lucide-vue-next";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 const router = useRouter();
 const authStore = useAuthStore();
+const toastStore = useToastStore();
 
 const carregando = ref(false);
 const relatorioGerado = ref(false);
@@ -17,9 +20,6 @@ const mostrarModalPin = ref(false);
 const pinDigitado = ref("");
 const tentativasRestantes = ref(3);
 const erroPin = ref("");
-
-// TODO Backend: PIN virá da API do dono
-const PIN_TEMPORARIO = "1234";
 
 const tipoRelatorio = ref("vendas");
 const periodoFiltro = ref("30dias");
@@ -37,84 +37,162 @@ const tiposRelatorio = [
   { valor: "geral", label: "Relatório Geral" },
 ];
 
-// Dados temporários (TODO Backend: virão da API)
 const dadosVendas = ref({
-  vendas: [
-    {
-      data: "2025-01-02 10:30",
-      produto: "Açaí Grosso 1L",
-      quantidade: 1,
-      valor: 25.0,
-      pagamento: "PIX",
-    },
-    {
-      data: "2025-01-02 11:45",
-      produto: "Açaí Médio 500ml",
-      quantidade: 1,
-      valor: 10.0,
-      pagamento: "Dinheiro",
-    },
-    {
-      data: "2025-01-02 14:20",
-      produto: "Açaí Popular 1L",
-      quantidade: 2,
-      valor: 30.0,
-      pagamento: "Débito",
-    },
-  ],
-  vendasPorDia: [
-    { dia: "01/01", total: 450 },
-    { dia: "02/01", total: 680 },
-    { dia: "03/01", total: 520 },
-  ],
-  vendasPorHora: [
-    { hora: "10h", vendas: 5 },
-    { hora: "11h", vendas: 8 },
-    { hora: "12h", vendas: 15 },
-    { hora: "13h", vendas: 12 },
-    { hora: "14h", vendas: 18 },
-    { hora: "15h", vendas: 10 },
-  ],
+  vendas: [],
+  vendasPorDia: [],
+  vendasPorHora: [],
+  totais: {
+    total_vendas: 0, 
+    valor_total: 0
+  }
 });
 
 const dadosEstoque = ref({
-  produtos: [
-    { nome: "Açaí", quantidade: 45, estoqueMaximo: 100, status: "baixo" },
-    { nome: "Farinha", quantidade: 18, estoqueMaximo: 50, status: "crítico" },
-    { nome: "Tapioca", quantidade: 35, estoqueMaximo: 80, status: "ok" },
-  ],
+  produtos: [],
 });
 
 const dadosFinanceiro = ref({
-  transacoes: [
-    {
-      data: "2025-01-02",
-      tipo: "receita",
-      descricao: "Vendas do dia",
-      valor: 850.0,
-    },
-    { data: "2025-01-02", tipo: "despesa", descricao: "Energia", valor: 280.0 },
-    {
-      data: "2025-01-01",
-      tipo: "despesa",
-      descricao: "Compra Açaí",
-      valor: 1200.0,
-    },
-  ],
-  receitasPorDia: [
-    { dia: "01/01", valor: 450 },
-    { dia: "02/01", valor: 850 },
-    { dia: "03/01", valor: 620 },
-  ],
-  despesasPorDia: [
-    { dia: "01/01", valor: 1200 },
-    { dia: "02/01", valor: 280 },
-    { dia: "03/01", valor: 150 },
-  ],
+  transacoes: [],
+  receitasPorDia: [],
+  despesasPorDia: [],
+  summary: {
+    revenues: 0,
+    expenses: 0,
+    balance: 0
+  }
 });
 
+function resolverPeriodo() {
+  const hoje = new Date();
+  const fim = hoje.toISOString().split('T')[0];
+
+  if (periodoFiltro.value === "7dias") {
+    const inicio = new Date();
+    inicio.setDate(hoje.getDate() - 6);
+    return {
+      inicio: inicio.toISOString().split('T')[0],
+      fim
+    }
+  }
+
+  if (periodoFiltro.value === "30dias") {
+    const inicio = new Date();
+    inicio.setDate(hoje.getDate() - 29);
+    return {
+      inicio: inicio.toISOString().split('T')[0],
+      fim
+    }
+  }
+
+  if (periodoFiltro.value === "customizado") {
+    return {
+      inicio: dataInicio.value,
+      fim: dataFim.value
+    }
+  }
+
+  return { inicio: fim, fim }
+}
+
+async function carregarVendas() {
+  const pontoId = authStore.user?.pontoId;
+  const { inicio, fim } = resolverPeriodo();
+
+  const resposta = await api.get(
+    `/relatorios/vendas?ponto_id=${pontoId}&data_inicio=${inicio}&data_fim=${fim}&agrupar=dia`)
+
+  dadosVendas.value.totais = resposta.totais;
+  dadosVendas.value.vendasPorDia = resposta.data.map((item) => ({
+    dia: new Date(item.periodo).toLocaleDateString("pt-BR", { 
+      day: "2-digit",
+      month: "2-digit" }),
+    total: parseFloat(item.valor_total),
+  }));
+
+  dadosVendas.value.vendas = resposta.data.map((item) => ({
+    data: new Date(item.periodo).toLocaleDateString("pt-BR"),
+    produto: `${item.total_vendas} venda(s)`,
+    quantidade: parseInt(item.total_quantidade || 0),
+    valor: parseFloat(item.valor_total),
+    pagamento: "-"
+  }));
+
+  dadosVendas.value.vendasPorHora = (resposta.vendasPorHora || []).map((item) => ({
+    hora: `${parseInt(item.hora)}h`,
+    vendas: parseInt(item.total_vendas),
+  }));
+}
+
+async function carregarEstoque() {
+  const pontoId = authStore.user?.pontoId;
+  const resposta = await produtosApi.listar(pontoId);
+
+  if (resposta.success) {
+    dadosEstoque.value.produtos = resposta.data.map((p) => {
+      const qtd = parseFloat(p.quantidade_estoque);
+      const minimo = parseFloat(p.estoque_minimo);
+
+      let status = "ok";
+      if (qtd <= minimo) status = "crítico";
+      else if (qtd <= minimo * 1.5) status = "baixo";
+
+      return {
+        nome: p.nome,
+        quantidade: qtd,
+        estoqueMinimo: minimo,
+        preco: parseFloat(p.preco),
+        status
+      }
+    });
+  }
+}
+
+async function carregarFinanceiro() {
+  const pontoId = authStore.user?.pontoId;
+  const { inicio, fim } = resolverPeriodo();
+
+  const resposta = await api.get(
+    `/relatorios/fluxo-caixa?ponto_id=${pontoId}&data_inicio=${inicio}&data_fim=${fim}`
+  );
+
+  dadosFinanceiro.value.summary = resposta.summary;
+
+  dadosFinanceiro.value.transacoes = resposta.data.map((t) => ({
+    data: new Date(t.data).toLocaleDateString("pt-BR"),
+    descricao: t.categoria,
+    valor: parseFloat(t.valor),
+    tipo: t.tipo
+  })) 
+  
+  const receitasPorDia = {}
+  const despesasPorDia = {}
+
+  resposta.data.forEach((t) => {
+    const dia = new Date(t.data).toLocaleDateString("pt-BR", { day: "2-digit",
+      month: "2-digit"
+     });
+
+    if (t.tipo === "receita") {
+      receitasPorDia[dia] = (receitasPorDia[dia] || 0) + parseFloat(t.valor);
+    } else {
+      despesasPorDia[dia] = (despesasPorDia[dia] || 0) + parseFloat(t.valor);
+    }
+  });
+
+  const todosDias = [...new Set([...Object.keys(receitasPorDia), ...Object.keys(despesasPorDia)])];
+  dadosFinanceiro.value.receitasPorDia = todosDias.map((dia) => ({
+    dia,
+    valor: receitasPorDia[dia] || 0
+    }));
+  dadosFinanceiro.value.despesasPorDia = todosDias.map((dia) => ({
+    dia,
+    valor: despesasPorDia[dia] || 0
+    }));
+  }
+  
+
 function validarPin() {
-  if (pinDigitado.value === PIN_TEMPORARIO) {
+  if (pinDigitado.value === authStore.user?.pin) {
     acessoLiberado.value = true;
     mostrarModalPin.value = false;
     erroPin.value = "";
@@ -138,13 +216,27 @@ function cancelarAcesso() {
 async function gerarRelatorio() {
   carregando.value = true;
 
-  // TODO Backend: GET /api/reports/${tipoRelatorio.value}?periodo=${periodoFiltro.value}
-  // Simular delay de API
+  try {
+    if (tipoRelatorio.value === "vendas") {
+      await carregarVendas();
+    } else if (tipoRelatorio.value === "estoque") {
+      await carregarEstoque();
+    } else if (tipoRelatorio.value === "financeiro") {
+      await carregarFinanceiro();
+    } else if (tipoRelatorio.value === "geral") {
+      await Promise.all([
+        carregarVendas(),
+        carregarEstoque(),
+        carregarFinanceiro()
+      ]);
+    }
 
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  relatorioGerado.value = true;
-  carregando.value = false;
+    relatorioGerado.value = true;
+  } catch (error) {
+    toastStore.error("Erro ao gerar relatório. Tente novamente.");
+  } finally {
+    carregando.value = false;
+  }
 }
 
 function exportarPDF() {
@@ -201,7 +293,7 @@ function exportarPDF() {
     const estoqueData = dadosEstoque.value.produtos.map((p) => [
       p.nome,
       `${p.quantidade} L`,
-      `${p.estoqueMaximo} L`,
+      `${p.estoqueMinimo} L`,
       p.status === "ok" ? "Normal" : p.status === "baixo" ? "Baixo" : "Crítico",
     ]);
 
@@ -277,10 +369,10 @@ function exportarPDF() {
 }
 
 const totalVendido = computed(() => {
-  return dadosVendas.value.vendas.reduce((sum, v) => sum + v.valor, 0);
+  return parseFloat(dadosVendas.value.totais.valor_total || 0);
 });
 
-const quantidadeVendas = computed(() => dadosVendas.value.vendas.length);
+const quantidadeVendas = computed(() => parseInt(dadosVendas.value.totais.total_vendas || 0));
 
 const ticketMedio = computed(() => {
   return quantidadeVendas.value > 0
@@ -290,7 +382,7 @@ const ticketMedio = computed(() => {
 
 const valorTotalEstoque = computed(() => {
   return dadosEstoque.value.produtos.reduce(
-    (sum, p) => sum + p.quantidade * 28.5,
+    (sum, p) => sum + p.quantidade * (p.preco || 0),
     0,
   );
 });
@@ -303,31 +395,28 @@ const produtosCriticos = computed(() => {
 });
 
 const totalReceitas = computed(() => {
-  return dadosFinanceiro.value.transacoes
-    .filter((t) => t.tipo === "receita")
-    .reduce((sum, t) => sum + t.valor, 0);
+  return parseFloat(dadosFinanceiro.value.summary.revenues || 0);
 });
 
 const totalDespesas = computed(() => {
-  return dadosFinanceiro.value.transacoes
-    .filter((t) => t.tipo === "despesa")
-    .reduce((sum, t) => sum + t.valor, 0);
+  return parseFloat(dadosFinanceiro.value.summary.expenses || 0);
 });
 
-const lucro = computed(() => totalReceitas.value - totalDespesas.value);
+const lucro = computed(() => {
+  return parseFloat(dadosFinanceiro.value.summary.balance || 0);
+});
 
 const maxVendasHora = computed(() => {
+  if (dadosVendas.value.vendasPorHora.length === 0) return 1;
   return Math.max(...dadosVendas.value.vendasPorHora.map((v) => v.vendas));
 });
 
 const maxReceitaDia = computed(() => {
-  const maxReceita = Math.max(
-    ...dadosFinanceiro.value.receitasPorDia.map((r) => r.valor),
-  );
-  const maxDespesa = Math.max(
-    ...dadosFinanceiro.value.despesasPorDia.map((d) => d.valor),
-  );
-  return Math.max(maxReceita, maxDespesa);
+  const receitas = dadosFinanceiro.value.receitasPorDia.map((r) => r.valor);
+  const despesas = dadosFinanceiro.value.despesasPorDia.map((d) => d.valor);
+  const todos = [...receitas, ...despesas];
+  if (todos.length === 0) return 1;
+  return Math.max(...todos);
 });
 
 function getBarWidth(valor, max) {
@@ -348,8 +437,6 @@ onMounted(() => {
   } else {
     mostrarModalPin.value = true;
   }
-
-  // TODO Backend: GET /api/relatorios
 });
 </script>
 
@@ -651,7 +738,7 @@ onMounted(() => {
                 <div>
                   <p class="font-medium text-gray-800">{{ produto.nome }}</p>
                   <p class="text-sm text-gray-500">
-                    {{ produto.quantidade }}L de {{ produto.estoqueMaximo }}L
+                    {{ produto.quantidade }}L de {{ produto.estoqueMinimo }}L
                     máximo
                   </p>
                 </div>

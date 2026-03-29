@@ -29,7 +29,7 @@ async function request(endpoint, options = {}) {
         try {
           const refreshResponse = await fetch(`${BASE_URL}/auth/refresh`, {
             method: "POST",
-            headers: { "Content=Type": "application/json" },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ refreshToken: authStore.refreshToken }),
           });
 
