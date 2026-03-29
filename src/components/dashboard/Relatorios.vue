@@ -455,7 +455,7 @@ onMounted(() => {
       <input
         v-model="pinDigitado"
         type="password"
-        maxlength="4"
+        maxlength="6"
         placeholder="Digite o PIN"
         class="w-full border border-gray-300 rounded px-4 py-3 text-center text-2xl tracking-widest focus:outline-none focus:border-purple-600 mb-2"
         @keyup.enter="validarPin"
