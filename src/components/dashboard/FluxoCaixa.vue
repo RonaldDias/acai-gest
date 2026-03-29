@@ -44,6 +44,16 @@ watch(periodoFiltro, () => {
   carregarFluxo();
 });
 
+watch([dataInicio, dataFim], () => {
+  if (
+    periodoFiltro.value === "customizado" &&
+    dataInicio.value &&
+    dataFim.value
+  ) {
+    carregarFluxo();
+  }
+});
+
 function resolverPeriodo() {
   const hoje = new Date();
   const fim = hoje.toISOString().split("T")[0];
@@ -64,7 +74,7 @@ function resolverPeriodo() {
     return { inicio: inicio.toISOString().split("T")[0], fim };
   }
 
-  if (periodoFiltro.value === "personalizado") {
+  if (periodoFiltro.value === "customizado") {
     return { inicio: dataInicio.value, fim: dataFim.value };
   }
 }
@@ -139,7 +149,6 @@ onMounted(() => {
 </script>
 
 <template>
-
   <div class="space-y-6">
     <div class="flex justify-between items-start">
       <div>
