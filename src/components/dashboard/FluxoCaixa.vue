@@ -127,7 +127,7 @@ async function registrarDespesa() {
     categoria: novaDespesa.value.categoria,
     descricao: novaDespesa.value.descricao,
     valor: novaDespesa.value.valor,
-    data: new Date(novaDespesa.value.data).toISOString(),
+    data: novaDespesa.value.data,
   });
 
   await carregarFluxo();
@@ -136,11 +136,8 @@ async function registrarDespesa() {
 }
 
 function formatarData(data) {
-  return new Date(data).toLocaleString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  const [ano, mes, dia] = data.split("T")[0].split("-");
+  return `${dia}/${mes}/${ano}`;
 }
 
 onMounted(() => {
