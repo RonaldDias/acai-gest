@@ -309,7 +309,13 @@ onMounted(async () => {
         <div>
           <p class="text-sm opacity-90">Total do Dia</p>
           <p class="text-3xl font-bold">
-            R$ {{ totalDinheiroHoje.toFixed(2) }}
+            R$
+            {{
+              totalDinheiroHoje.toLocaleString("pt-BR", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })
+            }}
           </p>
         </div>
       </div>
