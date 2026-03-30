@@ -102,12 +102,12 @@ function abrirPopup(provider) {
         </p>
 
         <div class="mb-2">
-          <label class="block text-sm text-gray-700 mb-1">E-mail</label>
+          <label class="block text-sm text-gray-700 mb-1">Login</label>
           <input
-            type="email"
+            type="text"
             v-model="email"
             class="w-full border-b py-3 focus:outline-none focus:border-purple-700 disabled:opacity-50"
-            placeholder="seuemail@exemplo.com"
+            placeholder="E-mail ou CPF"
           />
         </div>
 
