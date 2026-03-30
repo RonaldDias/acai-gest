@@ -1,15 +1,16 @@
-import { createRouter, createWebHistory } from "vue-router";
-import LoginView from "../views/LoginView.vue";
-import CadastroView from "../views/CadastroView.vue";
-import DashboardView from "@/views/DashboardView.vue";
-import Vendas from "@/components/dashboard/Vendas.vue";
 import Estoque from "@/components/dashboard/Estoque.vue";
 import FluxoCaixa from "@/components/dashboard/FluxoCaixa.vue";
-import { useAuthStore } from "@/stores/authStore";
 import Relatorios from "@/components/dashboard/Relatorios.vue";
+import Vendas from "@/components/dashboard/Vendas.vue";
 import Vendedores from "@/components/dashboard/Vendedores.vue";
-import TermosView from "@/views/TermosView.vue";
+import Configuracoes from "@/components/dashboard/Configuracoes.vue";
+import { useAuthStore } from "@/stores/authStore";
+import DashboardView from "@/views/DashboardView.vue";
 import EsqueciSenhaView from "@/views/EsqueciSenhaView.vue";
+import TermosView from "@/views/TermosView.vue";
+import { createRouter, createWebHistory } from "vue-router";
+import CadastroView from "../views/CadastroView.vue";
+import LoginView from "../views/LoginView.vue";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -64,6 +65,12 @@ const router = createRouter({
           path: "vendedores",
           name: "Vendedores",
           component: Vendedores,
+          meta: { requiresAuth: true, requiresDono: true },
+        },
+        {
+          path: "configuracoes",
+          name: "Configuracoes",
+          component: Configuracoes,
           meta: { requiresAuth: true, requiresDono: true },
         },
       ],

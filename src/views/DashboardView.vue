@@ -9,6 +9,7 @@ import {
   Menu,
   FileText,
   Users,
+  Settings,
 } from "lucide-vue-next";
 import { useCadastroStore } from "../stores/cadastroStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -134,6 +135,14 @@ function cancelarLogout() {
       </nav>
 
       <div class="p-2 border-t border-purple-600">
+        <div
+          v-if="authStore.user?.role === 'dono'"
+          @click="router.push('/dashboard/configuracoes')"
+          class="flex items-center space-x-3 w-full p-2 rounded hover:bg-purple-600 cursor-pointer mb-1"
+        >
+          <Settings size="20" />
+          <span v-if="sidebarOpen">Configurações</span>
+        </div>
         <button
           @click="logout"
           class="flex items-center space-x-3 w-full p-2 rounded hover:bg-purple-600"
