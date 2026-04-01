@@ -272,21 +272,23 @@ onMounted(async () => {
               v-if="vendedor.senha"
               class="flex justify-between items center"
             >
-              <div class="flex justify-between items-center">
-                <span class="text-gray-600">Senha:</span>
-                <button
-                  @click="resetarSenha(vendedor)"
-                  class="text-purple-600 hover:text-purple-800 text-xs bg-purple-50 px-2 py-1 rounded"
-                >
-                  Resetar
-                </button>
-                <button
-                  @click="copiarSenha(vendedor.senha)"
-                  class="text-blue-600 hover:text-blue-800 font-mono text-xs bg-blue-50 px-2 py-1 rounded"
-                >
-                  {{ vendedor.senha }} 📋
-                </button>
-              </div>
+              <span class="text-gray-600">Senha:</span>
+              <button
+                @click="copiarSenha(vendedor.senha)"
+                class="text-blue-600 hover:text-blue-800 font-mono text-xs bg-blue-50 px-2 py-1 rounded"
+              >
+                {{ vendedor.senha }} 📋
+              </button>
+            </div>
+
+            <div class="flex justify-between items-center">
+              <span class="text-gray-600">Resetar senha:</span>
+              <button
+                @click="resetarSenha(vendedor)"
+                class="text-purple-600 hover:text-purple-800 font-mono text-xs bg-purple-50 px-2 py-1 rounded"
+              >
+                Resetar
+              </button>
             </div>
           </div>
         </div>
