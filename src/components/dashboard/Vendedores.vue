@@ -90,6 +90,16 @@ function cancelarRemocao() {
   mostrarModalRemover.value = false;
 }
 
+async function resetarSenha(vendedor) {
+  try {
+    const data = await vendedoresApi.resetarSenha(vendedor.id);
+    vendedor.senha = data.senhaTemporaria;
+    toast.success(`Nova senha: ${data.senhaTemporaria}`);
+  } catch (error) {
+    toast.error("Erro ao resetar senha.");
+  }
+}
+
 async function removerVendedor() {
   try {
     await vendedoresApi.desativar(vendedorParaRemover.value.id);
@@ -232,7 +242,14 @@ onMounted(async () => {
               </div>
               <div>
                 <h3 class="font-semibold text-gray-800">{{ vendedor.nome }}</h3>
-                <p class="text-sm text-gray-500">{{ vendedor.cpf }}</p>
+                <p class="text-sm text-gray-500">
+                  {{
+                    vendedor.cpf.replace(
+                      /(\d{3})(\d{3})(\d{3})(\d{2})/,
+                      "$1.$2.$3-$4",
+                    )
+                  }}
+                </p>
               </div>
             </div>
             <button
@@ -257,6 +274,12 @@ onMounted(async () => {
             >
               <div class="flex justify-between items-center">
                 <span class="text-gray-600">Senha:</span>
+                <button
+                  @click="resetarSenha(vendedor)"
+                  class="text-purple-600 hover:text-purple-800 text-xs bg-purple-50 px-2 py-1 rounded"
+                >
+                  Resetar
+                </button>
                 <button
                   @click="copiarSenha(vendedor.senha)"
                   class="text-blue-600 hover:text-blue-800 font-mono text-xs bg-blue-50 px-2 py-1 rounded"

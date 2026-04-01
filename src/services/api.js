@@ -143,6 +143,10 @@ export const vendedoresApi = {
   desativar(id) {
     return api.delete(`/vendedores/${id}`);
   },
+
+  resetarSenha(id) {
+    return api.post(`/vendedores/${id}/resetar-senha`);
+  },
 };
 
 export default api;
