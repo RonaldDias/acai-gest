@@ -734,7 +734,7 @@ onMounted(() => {
                 <div>
                   <p class="font-medium text-gray-800">{{ venda.produto }}</p>
                   <p class="text-sm text-gray-500">
-                    {{ venda.data }} · {{ venda.quantidade }}x ·
+                    {{ venda.data }} - {{ venda.quantidade }} itens vendidos
                     {{ venda.pagamento }}
                   </p>
                 </div>
