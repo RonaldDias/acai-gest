@@ -112,15 +112,12 @@ async function carregarVendas() {
 
   dadosVendas.value.totais = resposta.totais;
   dadosVendas.value.vendasPorDia = resposta.data.map((item) => ({
-    dia: new Date(item.periodo).toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-    }),
+    dia: item.periodo.split("T")[0].split("-").reverse().slice(0, 2).join("/"),
     total: parseFloat(item.valor_total),
   }));
 
   dadosVendas.value.vendas = resposta.data.map((item) => ({
-    data: new Date(item.periodo).toLocaleDateString("pt-BR"),
+    data: item.periodo.split("T")[0].split("-").reverse().join("/"),
     produto: `${item.total_vendas} venda(s)`,
     quantidade: parseInt(item.total_quantidade || 0),
     valor: parseFloat(item.valor_total),
