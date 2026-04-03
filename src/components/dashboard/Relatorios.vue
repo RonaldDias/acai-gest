@@ -116,13 +116,19 @@ async function carregarVendas() {
     total: parseFloat(item.valor_total),
   }));
 
-  dadosVendas.value.vendas = resposta.data.map((item) => ({
-    data: item.periodo.split("T")[0].split("-").reverse().join("/"),
-    produto: `${item.total_vendas} venda(s)`,
-    quantidade: parseInt(item.total_quantidade || 0),
-    valor: parseFloat(item.valor_total),
-    pagamento: "-",
-  }));
+  dadosVendas.value.vendas = resposta.data.map((item) => {
+    const periodoData = item.periodo.split("T")[0];
+    const itens = resposta.itensPorDia.find(
+      (i) => i.periodo.split("T")[0] === periodoData,
+    );
+    return {
+      data: periodoData.split("-").reverse().join("/"),
+      produto: `${item.total_vendas} venda(s)`,
+      quantidade: parseInt(itens?.total_quantidade || 0),
+      valor: parseFloat(item.valor_total),
+      pagamento: "-",
+    };
+  });
 
   dadosVendas.value.vendasPorHora = (resposta.vendasPorHora || []).map(
     (item) => ({
