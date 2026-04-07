@@ -140,6 +140,13 @@ function formatarData(data) {
   return `${dia}/${mes}/${ano}`;
 }
 
+function formatarValor(e) {
+  let v = e.target.value.replace(/\D/g, "");
+  v = (parseInt(v || "0") / 100).toFixed(2);
+  novaDespesa.value.valor = parseFloat(v);
+  e.target.value = v;
+}
+
 onMounted(() => {
   carregarFluxo();
 });
@@ -267,10 +274,11 @@ onMounted(() => {
               >Valor (R$)</label
             >
             <input
-              v-model.number="novaDespesa.valor"
-              type="number"
-              min="0"
-              step="0.01"
+              :value="novaDespesa.valor.toFixed(2)"
+              @input="formatarValor"
+              inputmode="decimal"
+              type="text"
+              placeholder="0.00"
               class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-purple-600"
             />
           </div>
