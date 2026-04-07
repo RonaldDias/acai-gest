@@ -129,6 +129,7 @@ async function adicionarItem() {
       produtos.value.push({
         id: data.data.id,
         nome: data.data.nome,
+        tipo: novoItem.value.tipo,
         quantidade: parseFloat(data.data.quantidade_estoque),
         estoqueMinimo: parseFloat(data.data.estoque_minimo),
         unidade: novoItem.value.unidade,
@@ -483,7 +484,7 @@ onMounted(async () => {
           >
             <option :value="null">Selecione o produto...</option>
             <option v-for="prod in produtos" :key="prod.id" :value="prod.id">
-              {{ prod.nome }} ({{ prod.quantidade }} {{ prod.unidade }})
+              {{ prod.nome }} {{ prod.tipo ? `(${prod.tipo})` : '' }} - ({{ prod.quantidade }} {{ prod.unidade }})
             </option>
           </select>
         </div>
