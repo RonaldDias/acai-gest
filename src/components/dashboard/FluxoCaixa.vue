@@ -371,7 +371,7 @@ onMounted(() => {
                     {{ transacao.categoria }}
                   </p>
                   <p class="text-sm text-gray-500">
-                    {{ transacao.categoria }} ·
+                    {{ transacao.descricao || transacao.categoria }} ·
                     {{ formatarData(transacao.data).split(",")[0] }}
                   </p>
                 </div>

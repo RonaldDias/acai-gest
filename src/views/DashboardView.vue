@@ -11,11 +11,9 @@ import {
   Users,
   Settings,
 } from "lucide-vue-next";
-import { useCadastroStore } from "../stores/cadastroStore";
 import { useAuthStore } from "@/stores/authStore";
 
 const router = useRouter();
-const cadastro = useCadastroStore();
 const authStore = useAuthStore();
 
 const sidebarOpen = ref(false);
