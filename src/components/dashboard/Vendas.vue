@@ -23,7 +23,6 @@ const itensVenda = ref([]);
 
 const venda = ref({
   produtoId: null,
-  tipoAcai: null,
   outroNome: "",
   quantidade: 0,
   precoUnitario: 0,
@@ -140,7 +139,7 @@ function adicionarItem() {
   itensVenda.value.push({
     produtoId: venda.value.produtoId,
     produtoNome: produtoSelecionado.value.nome,
-    tipoAcai: venda.value.tipoAcai,
+    tipo: produtoSelecionado.value?.tipo,
     quantidade: quantidadeFinal,
     unidade: unidadeFinal,
     precoUnitario: venda.value.precoUnitario,
@@ -205,7 +204,6 @@ async function registrarVenda() {
 function limparFormulario() {
   venda.value = {
     produtoId: null,
-    tipoAcai: null,
     outroNome: "",
     quantidade: 0,
     precoUnitario: 0,
@@ -344,7 +342,7 @@ onMounted(async () => {
                   : 'border-gray-300 hover:border-purple-300',
               ]"
             >
-              {{ produto.nome }}
+              {{ produto.nome }} {{ produto.tipo ? `(${produto.tipo})` : '' }}
             </button>
           </div>
         </div>
@@ -406,8 +404,8 @@ onMounted(async () => {
               <div class="flex-1">
                 <p class="font-medium text-gray-800">
                   {{ item.produtoNome }}
-                  <span v-if="item.tipoAcai" class="text-sm text-gray-600"
-                    >({{ item.tipoAcai }})</span
+                  <span v-if="item.tipo" class="text-sm text-gray-600"
+                    >({{ item.tipo }})</span
                   >
                   <span v-if="item.outroNome" class="text-sm text-gray-600"
                     >({{ item.outroNome }})</span
@@ -524,8 +522,8 @@ onMounted(async () => {
                   <p class="font-medium text-gray-800">
                     <span v-for="(item, idx) in v.itens" :key="idx">
                       {{ item.produtoNome }}
-                      <span v-if="item.tipoAcai" class="text-sm text-gray-600"
-                        >({{ item.tipoAcai }})</span
+                      <span v-if="item.tipo" class="text-sm text-gray-600"
+                        >({{ item.tipo }})</span
                       >
                       <span v-if="item.outroNome" class="text-sm text-gray-600"
                         >({{ item.outroNome }})</span
