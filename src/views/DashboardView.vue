@@ -119,6 +119,15 @@ function cancelarLogout() {
         </button>
       </div>
 
+      <div v-if="sidebarOpen" class="px-4 py-3 border-b border-purple-600">
+        <p class="text-sm font-medium truncate">
+          Olá, {{ authStore.user?.empresa?.nome }}!
+        </p>
+        <p class="text-xs text-purple-300 capitalize">
+          {{ authStore.user?.role === 'dono' ? 'Proprietário' : authStore.user?.nome }}
+        </p>
+      </div>
+      
       <nav class="flex-1 p-2 space-y-2">
         <template v-for="item in menuItems" :key="item.name">
           <div
