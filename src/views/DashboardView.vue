@@ -82,7 +82,8 @@ async function validarSenhaModal() {
         }, 2000);
       }
     }
-  } catch {
+  } catch (error) {
+    console.error("Erro ao validar PIN:", error);
     erroModal.value = "Erro ao validar PIN. Tente novamente.";
   }
 }
