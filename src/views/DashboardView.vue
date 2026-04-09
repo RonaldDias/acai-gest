@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
+import api from "@/services/api";
 import {
   ShoppingCart,
   Package,
@@ -55,25 +56,33 @@ function goTo(route) {
   }
 }
 
-function validarSenhaModal() {
-  const pin = authStore.user?.pin;
-  if (senhaModal.value === pin) {
-    mostrarModalSenha.value = false;
-    router.push("/dashboard/fluxo-caixa");
-    tentativasRestantes.value = 3;
-  } else {
-    tentativasRestantes.value--;
-
-    if (tentativasRestantes.value > 0) {
-      erroModal.value = `PIN incorreto. ${tentativasRestantes.value} tentativa(s) restante(s).`;
-      senhaModal.value = "";
+async function validarSenhaModal() {
+  try {
+    const { data } = await api.post("/auth/validar-pin", {
+      pin: senhaModal.value,
+    });
+  
+    if (data.success) {
+      mostrarModalSenha.value = false;
+      router.push("/dashboard/fluxo-caixa");
+      tentativasRestantes.value = 3;
     } else {
-      erroModal.value = "Tentativas esgotadas. Voltando para Vendas...";
-      setTimeout(() => {
-        mostrarModalSenha.value = false;
-        router.push("/dashboard/vendas");
-      }, 2000);
+      tentativasRestantes.value--;
+      senhaModal.value = "";
+
+      if (tentativasRestantes.value > 0) {
+        erroModal.value = `PIN incorreto. ${tentativasRestantes.value} tentativa(s) restante(s).`;
+        senhaModal.value = "";
+      } else {
+        erroModal.value = "Tentativas esgotadas. Voltando para Vendas...";
+        setTimeout(() => {
+          mostrarModalSenha.value = false;
+          router.push("/dashboard/vendas");
+        }, 2000);
+      }
     }
+  } catch {
+    erroModal.value = "Erro ao validar PIN. Tente novamente.";
   }
 }
 
