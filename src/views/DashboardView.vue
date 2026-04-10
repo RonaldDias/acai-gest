@@ -61,7 +61,7 @@ function goTo(route) {
 async function validarSenhaModal() {
   console.log("chamando validarSenhaModal, pin:", senhaModal.value);
   try {
-    const { data } = await api.post("/auth/validar-pin", {
+    const data = await api.post("/auth/validar-pin", {
       pin: senhaModal.value,
     });
   
