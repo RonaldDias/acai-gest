@@ -59,7 +59,7 @@ async function trocarPlano() {
   loadingTrocar.value = true;
   try {
     const novoPlano = assinatura.value.plano === "basico" ? "top" : "basico";
-    await api.put(`/empresas/${authStore.user.empresaId}/plano`, { plano: novoPlano });
+    await api.patch(`/empresas/${authStore.user.empresaId}/plano`, { plano: novoPlano });
     assinatura.value.plano = novoPlano;
     authStore.user.plano = novoPlano;
     toast.success(`Plano alterado para ${novoPlano} com sucesso!`);
