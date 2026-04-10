@@ -14,6 +14,11 @@ const novoPinAtual = ref("");
 const novoPin = ref("");
 const novoPinConfirm = ref("");
 
+const assinatura = ref(null);
+const loadingAssinatura = ref(false);
+const loadingTrocar = ref(false);
+const confirmarCancelamento = ref(false);
+
 async function salvarPin() {
   if (novoPinAtual.value !== authStore.user?.pin) {
     toast.warning("PIN atual incorreto");
@@ -35,6 +40,49 @@ async function salvarPin() {
   novoPin.value = "";
   novoPinConfirm.value = "";
 }
+
+function formatarData(data) {
+  return new Date(data).toLocaleDateString("pt-BR");
+}
+
+async function buscarAssinatura() {
+  loadingAssinatura.value = true;
+  try {
+    const data = await api.get(`/empresas/${authStore.user.empresaId}/assinatura`);
+    assinatura.value = data.data;
+  } finally {
+    loadingAssinatura.value = false;
+  }
+}
+
+async function trocarPlano() {
+  loadingTrocar.value = true;
+  try {
+    const novoPlano = assinatura.value.plano === "basico" ? "top" : "basico";
+    await api.put(`/empresas/${authStore.user.empresaId}/plano`, { plano: novoPlano });
+    assinatura.value.plano = novoPlano;
+    authStore.user.plano = novoPlano;
+    toast.success(`Plano alterado para ${novoPlano} com sucesso!`);
+  } catch {
+    toast.error("Erro ao trocar de plano");
+  } finally {
+    loadingTrocar.value = false;
+  }
+}
+
+async function cancelarAssinatura() {
+  loadingTrocar.value = true;
+  try {
+    await api.patch(`/empresas/${authStore.user.empresaId}/cancelar-assinatura`);
+    assinatura.value.status = "cancelada";
+    confirmarCancelamento.value = false;
+    toast.success("Assinatura cancelada com sucesso!");
+  } catch {
+    toast.error("Erro ao cancelar assinatura.")
+  } finally {
+    loadingTrocar.value = false;
+  }
+}
 </script>
 
 <template>
@@ -50,7 +98,7 @@ async function salvarPin() {
           <ChevronLeft class="rotate-180 text-gray-400" :size="20" />
         </div>
         <div
-          @click="tela = 'assinatura'"
+          @click="tela = 'assinatura'; buscarAssinatura()"
           class="bg-white rounded-lg shadow p-4 cursor-pointer hover:bg-gray-50 transition flex items-center justify-between"
         >
           <span class="font-medium text-gray-800">Assinatura</span>
@@ -125,11 +173,88 @@ async function salvarPin() {
         <ChevronLeft :size="20" /> Voltar
       </button>
       <h1 class="text-2xl font-bold text-gray-800 mb-6">Assinatura</h1>
-      <div class="bg-white rounded-lg shadow p-6">
-        <p class="text-sm text-gray-500">Plano atual</p>
-        <p class="font-medium text-gray-800 capitalize">
-          {{ authStore.user?.empresa?.plano ?? "—" }}
-        </p>
+
+      <div v-if="loadingAssinatura" class="text-center text-gray-500 py-10">
+        Carregando...
+      </div>
+
+      <div v-else-if="assinatura" class="space-y-4">
+        <div class="bg-white rounded-lg shadow p-6 space-y-4">
+          <div class="flex justify-between items-center">
+            <div>
+              <p class="text-sm text-gray-500">Plano</p>
+              <p class="font-semibold text-gray-800 capitalize">{{ assinatura.plano }}</p>
+            </div>
+            <span
+              :class="assinatura.status === 'ativa' ? 'bg-green-100 text-green-700' : assinatura.status === 'cancelada' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'"
+              class="text-xs font-medium px-3 py-1 rounded-full capitalize"
+            >
+              {{ assinatura.status }}
+            </span>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500">Tipo</p>
+            <p class="font-medium text-gray-800 capitalize">{{ assinatura.tipo }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500">Início</p>
+            <p class="font-medium text-gray-800">{{ formatarData(assinatura.data_inicio) }}</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-500">Vencimento</p>
+            <p class="font-medium text-gray-800">{{ formatarData(assinatura.data_vencimento) }}</p>
+          </div>
+        </div>
+
+        <div v-if="assinatura.status !== 'cancelada'" class="bg-white rounded-lg shadow p-6 space-y-4">
+          <h2 class="font-semibold text-gray-800">Trocar de plano</h2>
+          <p class="text-sm text-gray-500">
+            Plano atual: <span class="font-medium capitalize">{{ assinatura.plano }}</span>
+          </p>
+          <button
+            @click="trocarPlano"
+            :disabled="loadingTrocar"
+            class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 transition disabled:opacity-50"
+          >
+            {{ loadingTrocar ? 'Alterando...' : `Mudar para ${assinatura.plano === 'basico' ? 'Top' : 'Básico'}` }}
+          </button>
+        </div>
+
+        <div v-if="assinatura.status !== 'cancelada'" class="bg-white rounded-lg shadow p-6 space-y-4">
+          <h2 class="font-semibold text-gray-800">Cancelar assinatura</h2>
+          <p class="text-sm text-gray-500">Ao cancelar, sua conta será desativada ao fim do período vigente.</p>
+          <button
+            @click="confirmarCancelamento = true"
+            class="w-full bg-red-600 text-white py-2 rounded hover:bg-red-700 transition"
+          >
+            Cancelar assinatura
+          </button>
+        </div>
+      </div>
+
+      <div
+        v-if="confirmarCancelamento"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+      >
+        <div class="bg-white rounded-lg p-6 w-96 shadow-xl">
+          <h2 class="text-xl font-bold text-gray-800 mb-4">Confirmar cancelamento</h2>
+          <p class="text-gray-600 mb-6">Tem certeza que deseja cancelar sua assinatura? Esta ação não pode ser desfeita.</p>
+          <div class="flex space-x-3">
+              <button
+              @click="confirmarCancelamento = false"
+              class="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              >
+                Voltar
+              </button>
+              <button
+              @click="cancelarAssinatura"
+              :disabled="loadingCancelar"
+              class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50"
+              >
+              {{ loadingCancelar ? 'Cancelando...' : 'Confirmar' }}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
