@@ -108,7 +108,7 @@ router.beforeEach((to, from, next) => {
     return;
   }
 
-  if (to.meta.requiresDono && authStore.user?.role !== "dono") {
+  if (to.meta.requiresDono && authStore.user?.role !== "dono" && !authStore.pinValidado) {
     next({ name: "Vendas" });
     return;
   }
