@@ -59,13 +59,13 @@ function goTo(route) {
 }
 
 async function validarSenhaModal() {
-  console.log("chamando validarSenhaModal, pin:", senhaModal.value);
   try {
     const data = await api.post("/auth/validar-pin", {
       pin: senhaModal.value,
     });
   
     if (data.success) {
+      console.log("destino:", destinoModal.value);
       authStore.validarPin();
       mostrarModalSenha.value = false;
       router.push(destinoModal.value);
@@ -185,7 +185,7 @@ function cancelarLogout() {
       <div class="bg-white rounded-lg p-6 w-96 shadow-xl">
         <h2 class="text-xl font-bold text-gray-800 mb-4">Acesso Restrito</h2>
         <p class="text-gray-600 mb-4">
-          Digite o PIN de segurança do dono para acessar o Fluxo de Caixa:
+          Digite o PIN de segurança do dono para acessar o {{ destinoModal === '/dashboard/fluxo-caixa' ? 'Fluxo de Caixa' : 'Relatórios' }}:
         </p>
 
         <input
