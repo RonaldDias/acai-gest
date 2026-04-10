@@ -24,6 +24,7 @@ const mostrarModalSenha = ref(false);
 const senhaModal = ref("");
 const erroModal = ref("");
 const tentativasRestantes = ref(3);
+const destinoModal = ref("");
 
 const menuItems = computed(() => {
   const base = [
@@ -46,11 +47,12 @@ const menuItems = computed(() => {
 });
 
 function goTo(route) {
-  if (route === "/dashboard/fluxo-caixa" && !authStore.isDono) {
+  if ((route === "/dashboard/fluxo-caixa" || route === "/dashboard/relatorios") && !authStore.isDono) {
     mostrarModalSenha.value = true;
     senhaModal.value = "";
     erroModal.value = "";
     tentativasRestantes.value = 3;
+    destinoModal.value = route;
   } else {
     router.push(route);
   }
@@ -64,8 +66,9 @@ async function validarSenhaModal() {
     });
   
     if (data.success) {
+      authStore.validarPin();
       mostrarModalSenha.value = false;
-      router.push("/dashboard/fluxo-caixa");
+      router.push(destinoModal.value);
       tentativasRestantes.value = 3;
     } else {
       tentativasRestantes.value--;

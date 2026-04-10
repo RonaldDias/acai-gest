@@ -23,12 +23,6 @@ const toastStore = useToastStore();
 const carregando = ref(false);
 const relatorioGerado = ref(false);
 
-const acessoLiberado = ref(false);
-const mostrarModalPin = ref(false);
-const pinDigitado = ref("");
-const tentativasRestantes = ref(3);
-const erroPin = ref("");
-
 const tipoRelatorio = ref("vendas");
 const periodoFiltro = ref("30dias");
 const dataInicio = ref("");
@@ -209,24 +203,6 @@ async function carregarFinanceiro() {
     dia,
     valor: despesasPorDia[dia] || 0,
   }));
-}
-
-function validarPin() {
-  if (pinDigitado.value === authStore.user?.pin) {
-    acessoLiberado.value = true;
-    mostrarModalPin.value = false;
-    erroPin.value = "";
-    authStore.validarPin();
-  } else {
-    tentativasRestantes.value--;
-
-    if (tentativasRestantes.value === 0) {
-      router.push("/dashboard/vendas");
-    } else {
-      erroPin.value = `PIN incorreto. ${tentativasRestantes.value} tentativa(s) restante(s).`;
-      pinDigitado.value = "";
-    }
-  }
 }
 
 function cancelarAcesso() {
@@ -476,57 +452,14 @@ function getStatusColor(status) {
 }
 
 onMounted(() => {
-  if (authStore.user?.role === "dono") {
-    acessoLiberado.value = true;
-  } else if (authStore.pinValidado) {
-    acessoLiberado.value = true;
-  } else {
-    mostrarModalPin.value = true;
+  if (authStore.user?.role !== "dono" && !authStore.pinValidado) {
+    router.push("/dashboard/vendas");
   }
 });
 </script>
 
 <template>
-  <div
-    v-if="mostrarModalPin"
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-  >
-    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-      <h2 class="text-xl font-bold text-gray-800 mb-4">Acesso Restrito</h2>
-      <p class="text-gray-600 mb-4">
-        Esta área é exclusiva para donos. Insira o PIN de segurança para
-        continuar.
-      </p>
-
-      <input
-        v-model="pinDigitado"
-        type="password"
-        maxlength="6"
-        placeholder="Digite o PIN"
-        class="w-full border border-gray-300 rounded px-4 py-3 text-center text-2xl tracking-widest focus:outline-none focus:border-purple-600 mb-2"
-        @keyup.enter="validarPin"
-      />
-
-      <p v-if="erroPin" class="text-red-600 text-sm mb-4">{{ erroPin }}</p>
-
-      <div class="flex space-x-3">
-        <button
-          @click="cancelarAcesso"
-          class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg font-semibold hover:bg-gray-400 transition"
-        >
-          Cancelar
-        </button>
-        <button
-          @click="validarPin"
-          class="flex-1 bg-purple-700 text-white py-2 rounded-lg font-semibold hover:bg-purple-800 transition"
-        >
-          Confirmar
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <div v-if="acessoLiberado" class="space-y-6">
+  <div class="space-y-6">
     <div>
       <h1 class="text-2xl font-bold text-gray-800">Relatórios</h1>
       <p class="text-gray-600 text-sm">
