@@ -3,7 +3,7 @@ import { ref } from "vue";
 import { useAuthStore } from "@/stores/authStore";
 import { useToastStore } from "@/stores/toastStore";
 import { ChevronLeft } from "lucide-vue-next";
-import { api } from "@/services/api";
+import api from "@/services/api";
 
 const authStore = useAuthStore();
 const toast = useToastStore();
