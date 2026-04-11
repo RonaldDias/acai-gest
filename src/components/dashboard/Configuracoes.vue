@@ -68,6 +68,7 @@ async function buscarAssinatura() {
 async function iniciarTrocaPlano() {
   const novoPlano = assinatura.value.plano === "basico" ? "top" : "basico;"
   console.log("plano atual:", assinatura.value.plano, "novo plano:", novoPlano);
+  console.log("novo plano tipo:", typeof novoPlano, JSON.stringify(novoPlano));
   telaUpgrade.value = true;
   formaPagamento.value = "";
   pixQrCode.value = "";
@@ -76,7 +77,6 @@ async function iniciarTrocaPlano() {
   msgDowngrade.value = "";
 
   if (novoPlano === "basico") {
-    console.log("entrou no downgrade")
     try {
       const data = await api.patch(`/empresas/${authStore.user.empresaId}/plano`, {
         novo_plano: novoPlano,
