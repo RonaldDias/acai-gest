@@ -73,7 +73,6 @@ async function iniciarTrocaPlano() {
   pixPayload.value = "";
   pagamentoConfirmado.value = false;
   msgDowngrade.value = "";
-  valorUpgrade.value = 0;
 
   if (novoPlano === "basico") {
     try {
@@ -91,15 +90,19 @@ async function iniciarTrocaPlano() {
     return;
   }
 
-  try {
-    const data = await api.patch(`/empresas/${authStore.user.empresaId}/plano`, {
-      novo_plano: novoPlano,
-      metodo_pagamento: "__calcular__"
-    })
-    valorUpgrade.value = data.pagamento?.valor ?? 0;
-  } catch (e) {
-    valorUpgrade.value = 0;
+  const valores = { 
+    basico: { mensal: 149.9, anual: 1619.1},
+    top: { mensal: 249.9, anual: 2699.1}
   }
+
+  const agora = new Date();
+  const vencimento = new Date(assinatura.value.data_vencimento);
+  const diasTotais = assinatura.value.tipo === "anual" ? 365 : 30;
+  const diasRestantes = Math.max(0, Math.ceil((vencimento - agora) / (1000 * 60 * 60 * 24)));
+  const valorAtual = valores[assinatura.value.plano][assinatura.value.tipo];
+  const valorNovo = valores["top"][assinatura.value.tipo];
+  const valorDiario = (valorNovo - valorAtual) / diasTotais;
+  valorUpgrade.value = parseFloat((valorDiario * diasRestantes).toFixed(2));
 }
 
 async function selecionarFormaPagamento(metodo) {
