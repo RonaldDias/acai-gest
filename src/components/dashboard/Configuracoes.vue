@@ -19,6 +19,16 @@ const loadingAssinatura = ref(false);
 const loadingTrocar = ref(false);
 const confirmarCancelamento = ref(false);
 
+const telaUpgrade = ref(false);
+const valorUpgrade = ref(0);
+const formaPagamento = ref("");
+const loadingCancelar = ref(false);
+const pixQrCode = ref("");
+const pixPayload = ref("");
+const pagamentoConfirmado = ref(false);
+const msgDowngrade = ref("");
+let pollingInterval = null;
+
 async function salvarPin() {
   if (novoPinAtual.value !== authStore.user?.pin) {
     toast.warning("PIN atual incorreto");
@@ -55,19 +65,84 @@ async function buscarAssinatura() {
   }
 }
 
-async function trocarPlano() {
-  loadingTrocar.value = true;
-  try {
-    const novoPlano = assinatura.value.plano === "basico" ? "top" : "basico";
-    await api.patch(`/empresas/${authStore.user.empresaId}/plano`, { plano: novoPlano });
-    assinatura.value.plano = novoPlano;
-    authStore.user.plano = novoPlano;
-    toast.success(`Plano alterado para ${novoPlano} com sucesso!`);
-  } catch {
-    toast.error("Erro ao trocar de plano");
-  } finally {
-    loadingTrocar.value = false;
+async function iniciarTrocaPlano() {
+  const novoPlano = assinatura.value.plano === "basico" ? "top" : "basico;"
+  telaUpgrade.value = true;
+  formaPagamento.value = "";
+  pixQrCode.value = "";
+  pixPayload.value = "";
+  pagamentoConfirmado.value = false;
+  msgDowngrade.value = "";
+  valorUpgrade.value = 0;
+
+  if (novoPlano === "basico") {
+    try {
+      const data = await api.patch(`/empresas/${authStore.user.empresaId}/plano`, {
+        novo_plano: novoPlano,
+        metodo_pagamento: "pix"
+      });
+      if (data.downgrade) {
+        msgDowngrade.value = data.message;
+      }
+    } catch {
+      toast.error("Erro ao processar downgrade.");
+      telaUpgrade.value = false;
+    }
+    return;
   }
+
+  try {
+    const data = await api.patch(`/empresas/${authStore.user.empresaId}/plano`, {
+      novo_plano: novoPlano,
+      metodo_pagamento: "__calcular__"
+    })
+    valorUpgrade.value = data.pagamento?.valor ?? 0;
+  } catch (e) {
+    valorUpgrade.value = 0;
+  }
+}
+
+async function selecionarFormaPagamento(metodo) {
+  formaPagamento.value = metodo;
+  const novoPlano = "top";
+
+  try {
+    const data = await api.patch(`/empresas/${authStore.user.empresaId}/plano`, {
+      novo_plano: novoPlano,
+      metodo_pagamento: metodo
+    })
+
+    if (metodo === "pix") {
+      pixQrCode.value = `data:image/png;base64,${data.pagamento.qr_code_base64}`;
+      pixPayload.value = data.pagamento.qr_code;
+
+      iniciarPollingUpgrade(data.pagamento.pagamento_id);
+    } else if (metodo === "cartao") {
+      const width = 600, height = 700;
+      const left = screen.width / 2 - width / 2;
+      const top = screen.height / 2 - height / 2;
+
+      window.open(data.pagamento.init_point, "MercadoPago", `width=${width},height=${height},top=${top},left=${left}`);
+      iniciarPollingUpgrade(data.pagamento.pagamento_id);
+    }
+  } catch {
+    toast.error("Erro ao processar pagamento.");
+  }
+}
+
+function iniciarPollingUpgrade() {
+  if (pollingInterval) clearInterval(pollingInterval);
+  pollingInterval = setInterval(async () => {
+    const data = await api.get(`/empresas/${authStore.user.empresaId}/assinatura`);
+    if (data.data.plano === "top") {
+      pagamentoConfirmado.value = true;
+      assinatura.value = data.data;
+      authStore.user.empresa.plano = "top";
+      clearInterval(pollingInterval);
+      telaUpgrade.value = false;
+      toast.success("Upgrade realizado com sucesso!");
+    }
+  }, 3000);
 }
 
 async function cancelarAssinatura() {
@@ -212,12 +287,49 @@ async function cancelarAssinatura() {
             Plano atual: <span class="font-medium capitalize">{{ assinatura.plano }}</span>
           </p>
           <button
-            @click="trocarPlano"
+            @click="iniciarTrocaPlano"
             :disabled="loadingTrocar"
             class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 transition disabled:opacity-50"
           >
-            {{ loadingTrocar ? 'Alterando...' : `Mudar para ${assinatura.plano === 'basico' ? 'Top' : 'Básico'}` }}
+            {{ `Mudar para ${assinatura.plano === 'basico' ? 'Top' : 'Básico'}` }}
           </button>
+        </div>
+
+        <div v-if="telaUpgrade" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div class="bg-white rounded-lg p-6 w-96 shadow-xl space-y-4">
+            <h2 class="text-xl font-bold text-gray-800">Trocar de plano</h2>
+
+            <div v-if="msgDowngrade" class="text-sm text-yellow-700 bg-yellow-50 p-3 rounded">
+              {{ msgDowngrade }}
+            </div>
+
+            <div v-else-if="!formaPagamento" class="space-y-3">
+              <p class="text-sm text-gray-600">
+                Valor proporcional do upgrade: <strong>R$ {{ valorUpgrade.toFixed(2) }}</strong>
+              </p>
+              <p class="text-sm text-gray-500">Escolha a forma de pagamento:</p>
+              <button @click="selecionarFormaPagamento('pix')" class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700">
+                Pagar via PIX
+              </button>
+              <button @click="selecionarFormaPagamento('cartao')" class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700">
+                Pagar com Cartão
+              </button>
+            </div>
+
+            <div v-else-if="formaPagamento === 'pix'" class="space-y-3">
+              <img :src="pixQrCode" class="w-48 h-48 mx-auto border" />
+              <p class="text-xs text-center font-mono bg-gray-100 p-2 rounded break-all">{{ pixPayload }}</p>
+              <p class="text-xs text-gray-500 text-center">Aguardando confirmação do pagamento...</p>
+            </div>
+
+            <div v-else-if="formaPagamento === 'cartao'" class="text-sm text-gray-600 text-center">
+              Complete o pagamento na janela do Mercado Pago.<br>Aguardando confirmação...
+            </div>
+
+            <button @click="telaUpgrade = false; formaPagamento = ''" class="w-full bg-gray-200 text-gray-700 py-2 rounded hover:bg-gray-300">
+              Cancelar
+            </button>
+          </div>
         </div>
 
         <div v-if="assinatura.status !== 'cancelada'" class="bg-white rounded-lg shadow p-6 space-y-4">
