@@ -76,6 +76,7 @@ async function iniciarTrocaPlano() {
   msgDowngrade.value = "";
 
   if (novoPlano === "basico") {
+    console.log("entrou no downgrade")
     try {
       const data = await api.patch(`/empresas/${authStore.user.empresaId}/plano`, {
         novo_plano: novoPlano,
