@@ -85,7 +85,8 @@ async function iniciarTrocaPlano() {
       if (data.downgrade) {
         msgDowngrade.value = data.message;
       }
-    } catch {
+    } catch (error) {
+      console.log("erro ao processar downgrade:", error);
       toast.error("Erro ao processar downgrade.");
       telaUpgrade.value = false;
     }
