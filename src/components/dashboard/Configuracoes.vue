@@ -67,6 +67,7 @@ async function buscarAssinatura() {
 
 async function iniciarTrocaPlano() {
   const novoPlano = assinatura.value.plano === "basico" ? "top" : "basico;"
+  console.log("plano atual:", assinatura.value.plano, "novo plano:", novoPlano);
   telaUpgrade.value = true;
   formaPagamento.value = "";
   pixQrCode.value = "";
