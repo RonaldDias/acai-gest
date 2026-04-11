@@ -88,6 +88,13 @@ export const api = {
     });
   },
 
+  patch(endpoint, body) {
+    return request(endpoint, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+  },
+
   delete(endpoint) {
     return request(endpoint, {
       method: "DELETE",
