@@ -99,7 +99,9 @@ async function confirmarDowngrade() {
       metodo_pagamento: "pix"
     })
     if (data.downgrade) {
-      msgDowngrade.value = data.message;
+      toast.success("Downgrade solicitado com sucesso!");
+      telaUpgrade.value = false;
+      msgDowngrade.value = "";
     }
   } catch (error) {
     toast.error("Erro ao processar downgrade.");
@@ -351,8 +353,11 @@ async function cancelarAssinatura() {
               Complete o pagamento na janela do Mercado Pago.<br>Aguardando confirmação...
             </div>
 
-            <button @click="telaUpgrade = false; formaPagamento = ''" class="w-full bg-gray-200 text-gray-700 py-2 rounded hover:bg-gray-300">
+            <button v-if="!msgDowngrade" @click="telaUpgrade = false; formaPagamento = ''" class="w-full bg-gray-200 text-gray-700 py-2 rounded hover:bg-gray-300">
               Cancelar
+            </button>
+            <button v-else @click="telaUpgrade = false; msgDowngrade = ''" class="w-full bg-gray-200 text-gray-700 py-2 rounded hover:bg-gray-300">
+              Fechar
             </button>
           </div>
         </div>
