@@ -76,23 +76,6 @@ async function iniciarTrocaPlano() {
   pagamentoConfirmado.value = false;
   msgDowngrade.value = "";
 
-  if (novoPlano === "basico") {
-    try {
-      const data = await api.patch(`/empresas/${authStore.user.empresaId}/plano`, {
-        novo_plano: novoPlano,
-        metodo_pagamento: "pix"
-      });
-      if (data.downgrade) {
-        msgDowngrade.value = data.message;
-      }
-    } catch (error) {
-      console.log("erro ao processar downgrade:", error);
-      toast.error("Erro ao processar downgrade.");
-      telaUpgrade.value = false;
-    }
-    return;
-  }
-
   const valores = { 
     basico: { mensal: 149.9, anual: 1619.1},
     top: { mensal: 249.9, anual: 2699.1}
@@ -106,6 +89,24 @@ async function iniciarTrocaPlano() {
   const valorNovo = valores["top"][assinatura.value.tipo];
   const valorDiario = (valorNovo - valorAtual) / diasTotais;
   valorUpgrade.value = parseFloat((valorDiario * diasRestantes).toFixed(2));
+}
+
+async function confirmarDowngrade() {
+  try {
+    loadingTrocar.value = true;
+    const data = await api.patch(`/empresas/${authStore.user.empresaId}/plano`, {
+      novo_plano: "basico",
+      metodo_pagamento: "pix"
+    })
+    if (data.downgrade) {
+      msgDowngrade.value = data.message;
+    }
+  } catch (error) {
+    toast.error("Erro ao processar downgrade.");
+    telaUpgrade.value = false;
+  } finally {
+    loadingTrocar.value = false;
+  }
 }
 
 async function selecionarFormaPagamento(metodo) {
@@ -307,9 +308,27 @@ async function cancelarAssinatura() {
 
             <div v-if="msgDowngrade" class="text-sm text-yellow-700 bg-yellow-50 p-3 rounded">
               {{ msgDowngrade }}
+              <p>Você continuará com o plano Top até o fim do período já pago.</p>
             </div>
 
-            <div v-else-if="!formaPagamento" class="space-y-3">
+            <div v-else-if="assinatura.plano === 'top' && !formaPagamento" class="space-y-3">
+              <div class="text-sm text-gray-600 bg-gray-50 p-3 rounded space-y-2">
+                <p>Você está mudando do plano <strong>Top</strong> para o plano <strong>Básico</strong>.</p>
+                <p class="text-gray-500">O que muda:</p>
+                <ul class="list-disc list-inside text-gray-500 space-y-1">
+                  <li>Limite de <strong>1 ponto de venda</strong></li>
+                  <li>Mensalidade de <strong>R$ 149,90</strong></li>
+                </ul>
+              </div>
+              <button
+                @click="confirmarDowngrade"
+                :disabled="loadingTrocar"
+                class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 disabled:opacity-50"
+              >
+                Confirmar mudança para Básico
+              </button>
+            </div>
+            <div v-else-if="assinatura.plano === 'basico' && !formaPagamento" class="space-y-3">
               <p class="text-sm text-gray-600">
                 Valor proporcional do upgrade: <strong>R$ {{ valorUpgrade.toFixed(2) }}</strong>
               </p>
