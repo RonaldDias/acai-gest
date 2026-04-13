@@ -295,7 +295,11 @@ async function cancelarAssinatura() {
           <p class="text-sm text-gray-500">
             Plano atual: <span class="font-medium capitalize">{{ assinatura.plano }}</span>
           </p>
+          <div v-if="assinatura.plano_pendente" class="text-sm text-yellow-700 bg-yellow-50 p-3 rounded">
+            Mudança para o plano <strong class="capitalize">{{ assinatura.plano_pendente }}</strong> agendada para {{ formatarData(assinatura.data_vencimento) }}.
+          </div>
           <button
+            v-else
             @click="iniciarTrocaPlano"
             :disabled="loadingTrocar"
             class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 transition disabled:opacity-50"
@@ -303,7 +307,6 @@ async function cancelarAssinatura() {
             {{ `Mudar para ${assinatura.plano === 'basico' ? 'Top' : 'Básico'}` }}
           </button>
         </div>
-
         <div v-if="telaUpgrade" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div class="bg-white rounded-lg p-6 w-96 shadow-xl space-y-4">
             <h2 class="text-xl font-bold text-gray-800">Trocar de plano</h2>
