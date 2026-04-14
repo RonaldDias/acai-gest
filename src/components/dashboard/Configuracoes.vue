@@ -102,6 +102,7 @@ async function confirmarDowngrade() {
       toast.success("Downgrade solicitado com sucesso!");
       telaUpgrade.value = false;
       msgDowngrade.value = "";
+      await buscarAssinatura();
     }
   } catch (error) {
     toast.error("Erro ao processar downgrade.");
