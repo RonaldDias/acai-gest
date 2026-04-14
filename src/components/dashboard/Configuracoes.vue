@@ -210,23 +210,10 @@ async function cancelarAssinatura() {
           <p class="text-sm text-gray-500">E-mail</p>
           <p class="font-medium text-gray-800">{{ authStore.user?.email }}</p>
         </div>
-        <div>
-          <p class="text-sm text-gray-500">PIN atual</p>
-          <p class="font-medium text-gray-800">
-            {{ authStore.user?.pin ?? "Não definido" }}
-          </p>
-        </div>
       </div>
 
       <div class="bg-white rounded-lg shadow p-6 mt-4 space-y-4">
         <h2 class="font-semibold text-gray-800">Alterar PIN</h2>
-        <input
-          v-model="novoPinAtual"
-          type="password"
-          placeholder="PIN atual"
-          maxlength="6"
-          class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-purple-600"
-        />
         <input
           v-model="novoPin"
           type="password"
