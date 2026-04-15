@@ -94,7 +94,7 @@ const transacoesFiltradas = computed(() => {
 });
 
 async function carregarFluxo() {
-  const pontoId = authStore.user?.pontoId;
+  const pontoId = authStore.pontoAtivo;
   const { inicio, fim } = resolverPeriodo();
 
   const resposta = await api.get(
@@ -120,7 +120,7 @@ function fecharFormulario() {
 }
 
 async function registrarDespesa() {
-  const pontoId = authStore.user?.pontoId;
+  const pontoId = authStore.pontoAtivo;
 
   await api.post("/despesas", {
     ponto_id: pontoId,
@@ -146,6 +146,10 @@ function formatarValor(e) {
   novaDespesa.value.valor = parseFloat(v);
   e.target.value = v;
 }
+
+watch(() => authStore.pontoAtivo, () => {
+  carregarFluxo();
+})
 
 onMounted(() => {
   carregarFluxo();

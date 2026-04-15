@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { Package, DollarSign, Plus, Minus, Search } from "lucide-vue-next";
 import { useToastStore } from "@/stores/toastStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -115,7 +115,7 @@ async function adicionarItem() {
 
   try {
     const data = await produtosApi.criar({
-      ponto_id: authStore.user?.pontoId,
+      ponto_id: authStore.pontoAtivo,
       nome,
       tipo: novoItem.value.tipo,
       unidade: unidadeMap[novoItem.value.unidade],
@@ -248,10 +248,14 @@ async function desativarProduto(id) {
   }
 }
 
+watch(() => authStore.pontoAtivo, () => {
+  carregarProdutos();
+})
+
 onMounted(async () => {
   carregando.value = true;
   try {
-    const pontoId = authStore.user?.pontoId;
+    const pontoId = authStore.pontoAtivo;
     const data = await produtosApi.listar(pontoId);
 
     if (data.success) {

@@ -97,7 +97,7 @@ function resolverPeriodo() {
 }
 
 async function carregarVendas() {
-  const pontoId = authStore.user?.pontoId;
+  const pontoId = authStore.pontoAtivo;
   const { inicio, fim } = resolverPeriodo();
 
   const resposta = await api.get(
@@ -133,7 +133,7 @@ async function carregarVendas() {
 }
 
 async function carregarEstoque() {
-  const pontoId = authStore.user?.pontoId;
+  const pontoId = authStore.pontoAtivo;
   const resposta = await produtosApi.listar(pontoId);
 
   if (resposta.success) {
@@ -157,7 +157,7 @@ async function carregarEstoque() {
 }
 
 async function carregarFinanceiro() {
-  const pontoId = authStore.user?.pontoId;
+  const pontoId = authStore.pontoAtivo;
   const { inicio, fim } = resolverPeriodo();
 
   const resposta = await api.get(
@@ -450,6 +450,12 @@ function getStatusColor(status) {
   if (status === "baixo") return "text-yellow-600";
   return "text-green-600";
 }
+
+watch(() => authStore.pontoAtivo, () => {
+  if (relatorioGerado.value) {
+    gerarRelatorio();
+  }
+})
 
 onMounted(() => {
   if (authStore.user?.role !== "dono" && !authStore.pinValidado) {

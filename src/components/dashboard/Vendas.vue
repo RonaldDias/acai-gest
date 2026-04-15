@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useAuthStore } from "@/stores/authStore";
 import { useToastStore } from "@/stores/toastStore";
 import { produtosApi, vendasApi } from "@/services/api.js";
@@ -170,7 +170,7 @@ async function registrarVenda() {
   }));
 
   const dadosVenda = {
-    ponto_id: authStore.user?.pontoId,
+    ponto_id: authStore.pontoAtivo,
     vendedor_id: authStore.user?.id || 1,
     forma_pagamento: venda.value.formaPagamento.toLowerCase(),
     itens: itensFormatados,
@@ -226,7 +226,7 @@ async function carregarProdutos() {
   errorProdutos.value = null;
 
   try {
-    const pontoId = authStore.user?.pontoId;
+    const pontoId = authStore.pontoAtivo;
     const response = await produtosApi.listar(pontoId);
 
     if (response.success) {
@@ -244,7 +244,7 @@ async function carregarProdutos() {
 
 async function carregarVendasHoje() {
   try {
-    const pontoId = authStore.user?.pontoId;
+    const pontoId = authStore.pontoAtivo;
     const response = await vendasApi.listarHoje(pontoId);
 
     if (response.success) {
@@ -266,7 +266,7 @@ async function carregarVendasHoje() {
 
 async function carregarResumoHoje() {
   try {
-    const pontoId = authStore.user?.pontoId;
+    const pontoId = authStore.pontoAtivo;
     const response = await vendasApi.resumoHoje(pontoId);
 
     if (response.success) {
@@ -277,6 +277,12 @@ async function carregarResumoHoje() {
     console.error("Erro ao carregar resumo:", error);
   }
 }
+
+watch(() => authStore.pontoAtivo, () => {
+  carregarProdutos();
+  carregarVendasHoje();
+  carregarResumoHoje();
+})
 
 onMounted(async () => {
   await carregarProdutos();

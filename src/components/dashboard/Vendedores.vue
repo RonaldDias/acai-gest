@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useToastStore } from "@/stores/toastStore";
 import { vendedoresApi } from "@/services/api";
 import { useAuthStore } from "@/stores/authStore";
@@ -60,7 +60,7 @@ async function cadastrarVendedor() {
     const data = await vendedoresApi.criar({
       nome: novoVendedor.value.nome,
       cpf: novoVendedor.value.cpf,
-      pontoId: authStore.user?.pontoId,
+      pontoId: authStore.pontoAtivo,
     });
 
     vendedores.value.push({
@@ -122,10 +122,9 @@ function copiarSenha(senha) {
   toast.success("Senha copiada!");
 }
 
-onMounted(async () => {
-  const pontoId = authStore.user?.pontoId;
+async function carregarVendedores() {
+  const pontoId = authStore.pontoAtivo;
   const data = await vendedoresApi.listar(pontoId);
-
   vendedores.value = data.vendedores.map((v) => ({
     id: v.id,
     nome: v.nome,
@@ -133,6 +132,14 @@ onMounted(async () => {
     dataCadastro: v.data_cadastro,
     senha: null,
   }));
+}
+
+watch(() => authStore.pontoAtivo, () => {
+  carregarVendedores();
+})
+
+onMounted(async () => {
+  carregarVendedores();
 });
 </script>
 
