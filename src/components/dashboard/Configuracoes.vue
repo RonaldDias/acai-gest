@@ -10,7 +10,6 @@ const toast = useToastStore();
 
 const tela = ref(null);
 
-const novoPinAtual = ref("");
 const novoPin = ref("");
 const novoPinConfirm = ref("");
 
@@ -30,10 +29,6 @@ const msgDowngrade = ref("");
 let pollingInterval = null;
 
 async function salvarPin() {
-  if (novoPinAtual.value !== authStore.user?.pin) {
-    toast.warning("PIN atual incorreto");
-    return;
-  }
   if (novoPin.value.length < 4 || novoPin.value.length > 6) {
     toast.warning("PIN deve ter entre 4 e 6 dígitos");
     return;
@@ -44,9 +39,7 @@ async function salvarPin() {
   }
 
   await api.put("/usuarios/pin", { pin: novoPin.value });
-  authStore.user.pin = novoPin.value;
   toast.success("PIN atualizado com sucesso!");
-  novoPinAtual.value = "";
   novoPin.value = "";
   novoPinConfirm.value = "";
 }
