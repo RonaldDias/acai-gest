@@ -248,16 +248,11 @@ async function desativarProduto(id) {
   }
 }
 
-watch(() => authStore.pontoAtivo, () => {
-  carregarProdutos();
-})
-
-onMounted(async () => {
+async function carregarProdutos() {
   carregando.value = true;
   try {
     const pontoId = authStore.pontoAtivo;
     const data = await produtosApi.listar(pontoId);
-
     if (data.success) {
       produtos.value = data.data.map((p) => ({
         id: p.id,
@@ -275,6 +270,14 @@ onMounted(async () => {
   } finally {
     carregando.value = false;
   }
+}
+
+watch(() => authStore.pontoAtivo, () => {
+  carregarProdutos();
+})
+
+onMounted(() => {
+  carregarProdutos();
 });
 </script>
 
