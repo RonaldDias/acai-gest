@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import api from "@/services/api";
 import {
@@ -19,6 +19,25 @@ const authStore = useAuthStore();
 
 const sidebarOpen = ref(false);
 const mostrarModalLogout = ref(false);
+
+const pontos = ref([]);
+const dropdownPontos = ref(false);
+
+async function carregarPontos() {
+  if (authStore.user?.empresa?.plano === "top") {
+    try {
+      const data = await api.get("/pontos");
+      pontos.value = data.data;
+    } catch (error) {
+      console.error("Erro ao carregar pontos:", error);
+    }
+  }
+}
+
+function selecionarPonto(ponto) {
+  authStore.trocarPonto(ponto.id);
+  dropDownPontos.value = false;
+}
 
 const mostrarModalSenha = ref(false);
 const senhaModal = ref("");
@@ -111,6 +130,10 @@ function confirmarLogout() {
 function cancelarLogout() {
   mostrarModalLogout.value = false;
 }
+
+onMounted(() => {
+  carregarPontos();
+})
 </script>
 
 <template>
@@ -140,6 +163,24 @@ function cancelarLogout() {
         <p class="text-xs text-purple-300 capitalize">
           {{ authStore.user?.role === 'dono' ? 'Proprietário' : authStore.user?.nome }}
         </p>
+      </div>
+
+      <div v-if="pontos.length > 1 && sidebarOpen" class="px-4 py-2 border-b border-purple-600">
+        <div @click="dropdownPontos = !dropdownPontos" class="flex items-center justify-between cursor-pointer text-sm">
+          <span class="truncate">{{ pontos.find(p => p.id === authStore.pontoAtivo)?.nome || 'Selecionar ponto' }}</span>
+          <ChevronLeft :class="dropdownPontos ? 'rotate-90' : '-rotate-90'" class="transition-transform" :size="16" />
+        </div>
+        <div v-if="dropdownPontos" class="mt-2 space-y-1">
+          <div
+            v-for="ponto in pontos"
+            :key="ponto.id"
+            @click="selecionarPonto(ponto)"
+            :class="ponto.id === authStore.pontoAtivo ? 'bg-purple-800' : 'hover:bg-purple-600'"
+            class="px-2 py-1 rounded cursor-pointer text-sm truncate"
+          >
+            {{ ponto.nome }}
+          </div>
+        </div>
       </div>
       
       <nav class="flex-1 p-2 space-y-2">

@@ -8,6 +8,7 @@ export const useAuthStore = defineStore("auth", {
     user: null,
     isAuthenticated: false,
     pinValidado: false,
+    pontoSelecionado: null,
   }),
 
   getters: {
@@ -15,6 +16,7 @@ export const useAuthStore = defineStore("auth", {
     isVendedor: (state) => state.user?.role === "vendedor",
     userName: (state) => state.user?.nome || "",
     userEmail: (state) => state.user?.email || "",
+    pontoAtivo: (state) => state.pontoSelecionado || state.user?.pontoId,
   },
 
   actions: {
@@ -46,6 +48,7 @@ export const useAuthStore = defineStore("auth", {
       this.user = null;
       this.isAuthenticated = false;
       this.pinValidado = false;
+      this.pontoSelecionado = null;
     },
 
     checkAuth() {
@@ -62,6 +65,10 @@ export const useAuthStore = defineStore("auth", {
 
     resetarPin() {
       this.pinValidado = false;
+    },
+
+    trocarPonto(pontoId) {
+      this.pontoSelecionado = pontoId;
     },
   },
 

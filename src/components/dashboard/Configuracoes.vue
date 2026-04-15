@@ -28,6 +28,42 @@ const pagamentoConfirmado = ref(false);
 const msgDowngrade = ref("");
 let pollingInterval = null;
 
+const pontos = ref([]);
+const loadingPontos = ref(false);
+const editandoPonto = ref(null);
+const novoPonto = ref({ nome: "", endereco: "" });
+const mostrarFormNovo = ref(false);
+
+async function buscarPontos() {
+  loadingPontos.value = true;
+  try {
+    const data = await api.get(`/pontos`);
+    pontos.value = data.data;
+  } finally {
+    loadingPontos.value = false;
+  }
+}
+
+async function salvarPonto(ponto) {
+  await api.put(`/pontos/${ponto.id}`, { nome: ponto.nome, endereco: ponto.endereco });
+  toast.success("Ponto atualizado com sucesso!");
+  editandoPonto.value = null;
+}
+
+async function criarPonto() {
+  await api.post("/pontos", novoPonto.value);
+  toast.success("Ponto criado com sucesso!");
+  novoPonto.value = { nome: "", endereco: "" };
+  mostrarFormNovo.value = false;
+  await buscarPontos();
+}
+
+async function desativarPonto(id) {
+  await api.delete(`/pontos/${id}`);
+  toast.success("Ponto deletado com sucesso!");
+  await buscarPontos();
+}
+
 async function salvarPin() {
   if (novoPin.value.length < 4 || novoPin.value.length > 6) {
     toast.warning("PIN deve ter entre 4 e 6 dígitos");
@@ -180,6 +216,15 @@ async function cancelarAssinatura() {
           class="bg-white rounded-lg shadow p-4 cursor-pointer hover:bg-gray-50 transition flex items-center justify-between"
         >
           <span class="font-medium text-gray-800">Assinatura</span>
+          <ChevronLeft class="rotate-180 text-gray-400" :size="20" />
+        </div>
+
+        <div
+          v-if="authStore.user?.empresa?.plano === 'top'"
+          @click="tela = 'pontos'; buscarPontos()"
+          class="bg-white rounded-lg shadow p-4 cursor-pointer hover:bg-gray-50 transition flex items-center justify-between"
+        >
+          <span class="font-medium text-gray-800">Meus Pontos</span>
           <ChevronLeft class="rotate-180 text-gray-400" :size="20" />
         </div>
       </div>
@@ -379,6 +424,51 @@ async function cancelarAssinatura() {
               >
               {{ loadingCancelar ? 'Cancelando...' : 'Confirmar' }}
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div v-else-if="tela === 'pontos'">
+      <button @click="tela = null" class="flex items-center text-purple-600 mb-6 hover:underline">
+        <ChevronLeft :size="20" /> Voltar
+      </button>
+      <h1 class="text-2xl font-bold text-gray-800 mb-6">Meus Pontos</h1>
+
+      <div v-if="loadingPontos" class="text-center text-gray-500 py-10">Carregando...</div>
+
+      <div v-else class="space-y-4">
+        <div v-for="ponto in pontos" :key="ponto.id" class="bg-white rounded-lg shadow p-6">
+          <div v-if="editandoPonto === ponto.id" class="space-y-3">
+            <input v-model="ponto.nome" placeholder="Nome do ponto" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-purple-600" />
+            <input v-model="ponto.endereco" placeholder="Endereço" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-purple-600" />
+            <div class="flex space-x-2">
+              <button @click="salvarPonto(ponto)" class="flex-1 bg-purple-600 text-white py-2 rounded hover:bg-purple-700">Salvar</button>
+              <button @click="editandoPonto = null" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded hover:bg-gray-300">Cancelar</button>
+            </div>
+          </div>
+          <div v-else class="flex justify-between items-center">
+            <div>
+              <p class="font-medium text-gray-800">{{ ponto.nome }}</p>
+              <p class="text-sm text-gray-500">{{ ponto.endereco || "Sem endereço" }}</p>
+            </div>
+            <div class="flex space-x-2">
+              <button @click="editandoPonto = ponto.id" class="text-purple-600 text-sm hover:underline">Editar</button>
+              <button @click="desativarPonto(ponto.id)" class="text-red-600 text-sm hover:underline">Desativar</button>
+            </div>
+          </div>
+        </div>
+
+        <button v-if="!mostrarFormNovo" @click="mostrarFormNovo = true" class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700">
+          Adicionar ponto
+        </button>
+
+        <div v-if="mostrarFormNovo" class="bg-white rounded-lg shadow p-6 space-y-3">
+          <input v-model="novoPonto.nome" placeholder="Nome do novo ponto" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-purple-600" />
+          <input v-model="novoPonto.endereco" placeholder="Endereço" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:border-purple-600" />
+          <div class="flex space-x-2">
+            <button @click="criarPonto" class="flex-1 bg-purple-600 text-white py-2 rounded hover:bg-purple-700">Criar</button>
+            <button @click="mostrarFormNovo = false" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded hover:bg-gray-300">Cancelar</button>
           </div>
         </div>
       </div>
