@@ -9,7 +9,7 @@ function goToLogin() {
 }
 
 function goToCadastro() {
-  router.push('/cadastro');
+  router.push('/cadastro/termos');
 }
 </script>
 
@@ -45,7 +45,7 @@ function goToCadastro() {
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
             <span class="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
           </span>
-          O 1º Sistema Focado em Batedeiras de Açaí
+          O 1º Sistema Focado em pontos de Açaí batido
         </div>
         
         <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-8 leading-tight">
@@ -54,12 +54,12 @@ function goToCadastro() {
         </h1>
         
         <p class="text-xl text-slate-400 mb-12 max-w-2xl mx-auto leading-relaxed">
-          Pare de perder dinheiro sem saber quanto açaí tem no freezer. Um PDV rápido, controle de litros (grosso, médio, popular) e relatórios no seu celular.
+          Pare de perder dinheiro sem saber quanto açaí tem no freezer. Um PDV rápido, controle de litros (grosso, médio, popular) e relatórios no seu computador ou celular.
         </p>
         
         <div class="flex flex-col sm:flex-row justify-center gap-4">
           <button @click="goToCadastro" class="group flex items-center justify-center gap-2 bg-green-500 hover:bg-green-400 text-slate-900 text-lg font-bold px-8 py-4 rounded-xl transition-all shadow-[0_0_30px_rgba(34,197,94,0.3)] hover:scale-105">
-            Começar meu mês Grátis
+            Começar Agora
             <ChevronRight class="group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
@@ -69,7 +69,7 @@ function goToCadastro() {
     <!-- Social Proof -->
     <section class="py-10 border-y border-white/5 bg-slate-900/50">
       <div class="max-w-7xl mx-auto px-4 text-center">
-        <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-6">A escolha inteligente para batedeiras no Norte e Nordeste</p>
+        <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-6">A escolha inteligente para pontos de venda no Norte e Nordeste</p>
         <div class="flex flex-wrap justify-center gap-8 md:gap-16 opacity-50 grayscale">
           <!-- Placeholder Logos -->
           <div class="flex items-center gap-2 font-bold text-xl"><Store /> Açaí do Chef</div>
@@ -83,7 +83,7 @@ function goToCadastro() {
     <section id="funcionalidades" class="py-24 relative">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-20">
-          <h2 class="text-4xl md:text-5xl font-bold mb-6">Tudo que sua batedeira precisa.</h2>
+          <h2 class="text-4xl md:text-5xl font-bold mb-6">Tudo o que o seu ponto precisa.</h2>
           <p class="text-xl text-slate-400">Desenvolvido entendendo a realidade de quem bate o açaí todo dia.</p>
         </div>
 
@@ -129,14 +129,14 @@ function goToCadastro() {
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-20">
           <h2 class="text-4xl md:text-5xl font-bold mb-6">Planos simples e transparentes.</h2>
-          <p class="text-xl text-slate-400">Custa menos que 1 litro desperdiçado por falta de controle.</p>
+          <p class="text-xl text-slate-400">Custa para o mês inteiro menos do que você fatura em apenas 1 dia.</p>
         </div>
 
         <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           <!-- Básico Plan -->
           <div class="bg-slate-800 border border-slate-700 rounded-3xl p-8 relative flex flex-col">
             <h3 class="text-2xl font-bold mb-2">Básico</h3>
-            <p class="text-slate-400 mb-6">Perfeito para batedeiras de 1 único ponto.</p>
+            <p class="text-slate-400 mb-6">Perfeito para quem gerencia um único ponto de venda.</p>
             <div class="mb-8">
               <span class="text-5xl font-extrabold">R$ 149</span><span class="text-slate-400">/mês</span>
             </div>
@@ -199,7 +199,7 @@ function goToCadastro() {
     <section class="py-20 relative overflow-hidden">
       <div class="absolute inset-0 bg-purple-900/20"></div>
       <div class="max-w-4xl mx-auto px-4 text-center relative z-10">
-        <h2 class="text-3xl md:text-5xl font-bold mb-6">Pronto para a revolução na sua batedeira?</h2>
+        <h2 class="text-3xl md:text-5xl font-bold mb-6">Pronto para a revolução no seu ponto de venda?</h2>
         <p class="text-lg text-slate-400 mb-10">Acesse o Açaí Gest hoje mesmo e veja as vendas dispararem enquanto os furos somem.</p>
         <button @click="goToCadastro" class="bg-white text-slate-900 text-lg font-bold px-10 py-4 rounded-xl transition hover:scale-105 shadow-xl shadow-white/10">
           Criar conta agora
