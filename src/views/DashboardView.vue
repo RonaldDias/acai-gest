@@ -124,7 +124,7 @@ function logout() {
 
 function confirmarLogout() {
   authStore.logout();
-  router.push("/");
+  router.push("/login");
 }
 
 function cancelarLogout() {

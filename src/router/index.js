@@ -17,6 +17,12 @@ const router = createRouter({
   routes: [
     {
       path: "/",
+      name: "Landing",
+      component: () => import("../views/LandingView.vue"),
+      meta: { requiresAuth: false },
+    },
+    {
+      path: "/login",
       name: "login",
       component: LoginView,
       meta: { requiresAuth: false },
@@ -103,7 +109,7 @@ router.beforeEach((to, from, next) => {
     return;
   }
 
-  if (isAuthenticated && (to.name === "login" || to.name === "Cadastro")) {
+  if (isAuthenticated && (to.name === "login" || to.name === "Landing" || to.name === "Cadastro")) {
     next({ name: "Vendas" });
     return;
   }
