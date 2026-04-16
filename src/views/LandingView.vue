@@ -19,10 +19,8 @@ function goToCadastro() {
     <nav class="fixed w-full z-50 bg-slate-900/80 backdrop-blur-md border-b border-white/10 transition-all duration-300">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-20">
-          <div class="flex items-center gap-2">
-            <div class="w-10 h-10 bg-purple-600 rounded-xl flex items-center justify-center transform rotate-3 shadow-lg shadow-purple-500/20">
-              <Store class="text-white h-6 w-6" />
-            </div>
+          <div class="flex items-center gap-3">
+            <img src="/logo.jpg" alt="Açaí Gest Logo" class="h-10 w-10 md:h-12 md:w-12 rounded-xl object-cover shadow-lg shadow-purple-500/20" />
             <span class="text-xl md:text-2xl font-bold tracking-tight">Açaí <span class="text-purple-500">Gest</span></span>
           </div>
           <div class="flex items-center space-x-2 md:space-x-8">
@@ -208,8 +206,8 @@ function goToCadastro() {
     </section>
 
     <footer class="bg-black py-8 border-t border-white/10 text-center">
-      <div class="flex items-center justify-center gap-2 mb-4">
-        <Store class="text-purple-600 h-6 w-6" />
+      <div class="flex items-center justify-center gap-3 mb-4">
+        <img src="/logo.jpg" alt="Açaí Gest Logo" class="h-8 w-8 rounded-lg object-cover opacity-80" />
         <span class="text-xl font-bold tracking-tight">Açaí <span class="text-purple-500">Gest</span></span>
       </div>
       <p class="text-slate-500 text-sm">© {{ new Date().getFullYear() }} Açaí Gest. Todos os direitos reservados.</p>
